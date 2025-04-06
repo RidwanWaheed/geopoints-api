@@ -31,8 +31,9 @@ class PointInDBBase(PointBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Properties to return to client
 class Point(PointInDBBase):

@@ -20,8 +20,9 @@ class CategoryUpdate(CategoryBase):
 class CategoryInDBBase(CategoryBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Properties to return to client
 class Category(CategoryInDBBase):
