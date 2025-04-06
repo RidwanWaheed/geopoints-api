@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional, Tuple
 from geoalchemy2.shape import to_shape
+from typing import List, Optional, Tuple
 
 from app.models.point import Point
 from app.spatial.utils import point_to_geojson
