@@ -1,6 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel
 from datetime import datetime
+from pydantic import BaseModel
 from geojson_pydantic import Point as GeoJSONPoint
 
 from app.schemas.category import Category
@@ -31,8 +31,9 @@ class PointInDBBase(PointBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 # Properties to return to client
 class Point(PointInDBBase):
