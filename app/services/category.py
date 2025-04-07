@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
@@ -33,3 +34,7 @@ class CategoryService:
     def remove(self, db: Session, *, id: int) -> Category:
          """Remove a category"""
          return self.repository.remove(db=db, id=id)
+    
+    def count(self, db: Session) -> int:
+        """Count total categories"""
+        return db.query(func.count(Category.id)).scalar()

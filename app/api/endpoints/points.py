@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.dependencies import get_db
 from app.api.deps import get_point_service
 from app.services.point import PointService
+from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import Point, PointCreate, PointUpdate, NearbyPoint
 
 
@@ -20,17 +21,33 @@ def create_point(
      """Create a new point"""
      return service.create(db=db, obj_in=point_in)
 
-@router.get("/", response_model=List[Point])
+@router.get("/", response_model=PagedResponse[Point])
 def read_points(
      *,
-     skip: int = 0,
-     limit: int = 100,
+     pagination: PageParams = Depends(),
      category_id: Optional[int] = None,
      db: Session = Depends(get_db),
      service: PointService = Depends(get_point_service)
 ):
-     """Retrieve points with optional category filter"""
-     return service.get_multi(db=db, skip=skip, limit=limit, category_id=category_id)
+     """Retrieve points with optional category filter and pagination"""
+     # Get total count
+     total = service.count(db=db, category_id=category_id)
+
+     # Get paginated items
+     items = service.get_multi(
+         db=db,
+         skip=(pagination.page - 1) * pagination.limit,
+         limit=pagination.limit,
+         category_id=category_id
+         )
+     
+     # Return paginated response
+     return PagedResponse.create(
+         items=items,
+         total=total,
+         page=pagination.page,
+         limit=pagination.limit
+     )
 
 @router.get("/nearby", response_model=List[NearbyPoint])
 def get_nearby_points(

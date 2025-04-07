@@ -81,5 +81,12 @@ class PointService:
             results.append(point_schema)
 
         return results
+    
+    def count(self, db: Session, *, category_id: Optional[int] = None) -> int:
+        """Count total points with optional category filter"""
+        query = db.query(func.count(Point.id))
+        if category_id:
+            query = query.filter(Point.category_id == category_id)
+        return query.scalar()
 
 
