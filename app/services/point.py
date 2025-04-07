@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from geoalchemy2.shape import to_shape
 from typing import List, Optional, Tuple
@@ -47,5 +48,25 @@ class PointService:
             results.append(nearby_point)
 
         return results
+    
+    def get_within_polygon(self, db: Session, *, polygon: str, limit: int = 100) -> List[Point]:
+        """Get points within a polygon defined in WKT format"""
+        # Query points using PostGIS ST_Within
+        query = db.query(Point).filter(
+            func.ST_Within(
+                Point.geometry,
+                func.ST_GeomFromText(polygon, 4326)
+            )
+        ).limit(limit)
+
+        results = []
+        for point_obj in query.all():
+          # Convert to Pydantic model
+          point_schema = PointSchema.model_validate(point_obj)  
+          # Add the GeoJSON coordinates
+          point_schema.coordinates = point_to_geojson(point_obj.geometry)
+          results.append(point_schema)
+
+          return results
 
 
