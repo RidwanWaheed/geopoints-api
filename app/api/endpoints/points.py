@@ -62,7 +62,7 @@ def read_point(
       return point
 
 @router.put("/{point_id}", response_model=Point)
-def read_point(
+def update_point(
      *,
      point_id: int,
      point_in: PointUpdate,

@@ -44,7 +44,7 @@ def read_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found"
         )
-    return Category    
+    return category    
 
 @router.put("/{category_id}", response_model=Category)
 def update_category(

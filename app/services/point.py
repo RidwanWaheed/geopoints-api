@@ -27,7 +27,7 @@ class PointService:
             return self.repository.get_by_category(db=db, category_id=category_id, skip=skip, limit=limit)
         return self.repository.get_multi(db=db, skip=skip, limit=limit)
     
-    def update(self, db = Session, *, db_obj: Point, obj_in: PointUpdate) -> Point:
+    def update(self, db: Session, *, db_obj: Point, obj_in: PointUpdate) -> Point:
         """Update a point"""
         return self.repository.update(db=db, db_obj=db_obj, obj_in=obj_in)
     
