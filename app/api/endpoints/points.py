@@ -36,14 +36,14 @@ def read_points(
 def get_nearby_points(
      *,
      lat: float = Query(..., ge=-90, le=90),
-     long: float = Query(..., ge=-180, le=180),
+     lng: float = Query(..., ge=-180, le=180),
      radius: float = Query(..., ge=0, le=100000),
      limit: int = Query(100, ge=1, le=1000),
      db: Session = Depends(get_db),
      service: PointService = Depends(get_point_service)
 ):
       """Get points within a radius of a location"""
-      return service.get_nearby(db=db, lat=lat, long=long, radius=radius, limit=limit)
+      return service.get_nearby(db=db, lat=lat, lng=lng, radius=radius, limit=limit)
 
 @router.get("/{point_id}", response_model=Point)
 def read_point(
@@ -79,7 +79,7 @@ def update_point(
       return service.update(db=db, db_obj=point, obj_in=point_in)
 
 @router.delete("/{point_id}", response_model=Point)
-def read_point(
+def delete_point(
      *,
      point_id: int,
      db: Session = Depends(get_db),
@@ -104,3 +104,15 @@ def get_points_within_polygon(
 ):
     """Get points within a polygon boundary"""
     return service.get_within_polygon(db=db, polygon=polygon, limit=limit)
+
+@router.get("/nearest", response_model=List[NearbyPoint])
+def get_nearest_points(
+    *,
+    lat: float = Query(..., ge=-90, le=90),
+    lng: float = Query(..., ge=-180, le=180),
+    limit: int = Query(5, ge=1, le=100),
+    db: Session = Depends(get_db),
+    service: PointService = Depends(get_point_service)
+):
+    """Get the nearest points to a location"""
+    return service.get_nearest(db=db, lat=lat, lng=lng, limit=limit)

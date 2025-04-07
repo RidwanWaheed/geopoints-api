@@ -35,10 +35,10 @@ class PointService:
         """Remove a point"""
         return self.repository.remove(db=db, id=id)
     
-    def get_nearby(self, db: Session, *, lat: float, long: float, radius: float, limit: int = 100) -> List[NearbyPoint]:
+    def get_nearby(self, db: Session, *, lat: float, lng: float, radius: float, limit: int = 100) -> List[NearbyPoint]:
         """Get points within a specified radius of a location"""
         results = []
-        for point_obj, distance in self.repository.get_nearby(db=db, lat=lat, long=long, radius=radius, limit=limit):
+        for point_obj, distance in self.repository.get_nearby(db=db, lat=lat, lng=lng, radius=radius, limit=limit):
             # Convert to Pydantic model
             point_schema = PointSchema.model_validate(point_obj)
             # Add the GeoJSON coordinates
@@ -67,6 +67,19 @@ class PointService:
           point_schema.coordinates = point_to_geojson(point_obj.geometry)
           results.append(point_schema)
 
-          return results
+        return results
+        
+
+    def get_nearest(self, db: Session, *, lat: float, lng: float, limit: int = 5) -> List[NearbyPoint]:
+        """Get the nearest points to a location"""
+        results = []
+        for point_obj, distance in self.repository.get_nearest(db=db, lat=lat, lng=lng, limit=limit):
+            # Convert to Pydantic model
+            point_schema = PointSchema.model_validate(point_obj)
+            # Add the GeoJSON coordinates
+            point_schema.coordinates = point_to_geojson(point_obj.geometry)
+            results.append(point_schema)
+
+        return results
 
 
