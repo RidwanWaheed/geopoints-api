@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.dependencies import get_db
 from app.api.deps import get_category_service
 from app.services.category import CategoryService
+from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
 
 router = APIRouter()
@@ -19,16 +20,31 @@ def create_category(
     """Create a new category"""
     return service.create(db=db, obj_in=category_in)
 
-@router.get("/", response_model=List[Category])
+@router.get("/", response_model=PagedResponse[Category])
 def read_categories(
     *,
-    skip: int = 0,
-    limit: int = 100,
+    pagination: PageParams = Depends(),
     db: Session = Depends(get_db),
     service: CategoryService = Depends(get_category_service)
 ):
-    """Retrieve categories"""
-    return service.get_multi(db=db, skip=skip, limit=limit)
+    """Retrieve categories with pagination"""
+    # Get total count
+    total = service.count(db=db)
+
+    # Get paginated items
+    items = service.get_multi(
+        db=db, 
+        skip=(pagination.page - 1) * pagination.limit, 
+        limit=pagination.limit
+    )
+
+    # Return paginated response
+    return PagedResponse.create(
+        items=items,
+        total=total,
+        page=pagination.page,
+        limit=pagination.limit
+    )
 
 @router.get("/{category_id}", response_model=Category)
 def read_category(
