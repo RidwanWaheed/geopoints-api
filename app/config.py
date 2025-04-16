@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     DATABASE_URI: Optional[str] = None  # Change from PostgresDsn to str
 
+    SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-in-production")
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
     # CORS settings
     BACKEND_CORS_ORIGINS: str = ""
 

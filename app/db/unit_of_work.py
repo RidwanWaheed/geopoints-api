@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.repositories.category import CategoryRepository
 from app.repositories.point import PointRepository
+from app.repositories.user import UserRepository
 
 
 class UnitOfWork:
@@ -28,6 +29,7 @@ class UnitOfWork:
             # Initialize repositories with session
             self.points = PointRepository(self.session)
             self.categories = CategoryRepository(self.session)
+            self.users = UserRepository(self.session)
 
             yield self
             self.session.commit()
