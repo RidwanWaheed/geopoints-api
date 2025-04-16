@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 
 
 from app.api.deps import get_point_service
-from app.dependencies import get_session
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
 from app.services.point import PointService

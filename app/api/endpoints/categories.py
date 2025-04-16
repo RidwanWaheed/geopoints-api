@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_category_service
-from app.dependencies import get_session
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
 from app.schemas.pagination import PagedResponse, PageParams
 from app.services.category import CategoryService
@@ -64,12 +63,12 @@ def update_category(
     service: CategoryService = Depends(get_category_service)
 ):
     """Update a category"""
-    category = service.get(id=category_id)
-    if not category:
+    updated_category = service.update(id=category_id, obj_in=category_in)
+    if not updated_category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
         )
-    return service.update(db_obj=category, obj_in=category_in)
+    return updated_category
 
 
 @router.delete("/{category_id}", response_model=Category)

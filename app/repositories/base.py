@@ -51,7 +51,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             update_data = (
                 obj_in.model_dump(exclude_unset=True)
                 if hasattr(obj_in, "model_dump")
-                else obj_in.dict(exclude_unset=True)
+                else obj_in.model_dump(exclude_unset=True)
             )
 
         # Apply changes to model
