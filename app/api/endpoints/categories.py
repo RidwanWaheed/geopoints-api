@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_category_service
+from app.core.exceptions import NotFoundException
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
 from app.schemas.pagination import PagedResponse, PageParams
 from app.services.category import CategoryService
@@ -49,9 +50,7 @@ def read_category(
     """Get a specific category by id"""
     category = service.get(id=category_id)
     if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+        raise NotFoundException(detail=f"Category with id {category_id} not found")
     return category
 
 
@@ -63,11 +62,13 @@ def update_category(
     service: CategoryService = Depends(get_category_service)
 ):
     """Update a category"""
-    updated_category = service.update(id=category_id, obj_in=category_in)
-    if not updated_category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+    # First get the existing category
+    category = service.get(id=category_id)
+    if not category:
+        raise NotFoundException(detail=f"Category with id {category_id} not found")
+    
+    # Now update it
+    updated_category = service.update(db_obj=category, obj_in=category_in)
     return updated_category
 
 
@@ -80,7 +81,5 @@ def delete_category(
     """Delete a category"""
     category = service.get(id=category_id)
     if not category:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-        )
+        raise NotFoundException(detail=f"Category with id {category_id} not found")
     return service.remove(id=category_id)

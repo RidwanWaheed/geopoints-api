@@ -8,6 +8,7 @@ from app.api.deps import get_point_service
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
 from app.services.point import PointService
+from app.core.exceptions import NotFoundException
 
 router = APIRouter()
 
@@ -91,9 +92,8 @@ def read_point(
     """Get a specific point by id"""
     point = service.get(id=point_id)
     if not point:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
-        )
+        raise NotFoundException(detail=f"Point with id {point_id} not found")
+    
     return point
 
 
@@ -109,10 +109,8 @@ def update_point(
     # Get the database model instance
     updated_point = service.update(id=point_id, obj_in=point_in)
     if not updated_point:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
-        )
-
+        raise NotFoundException(detail=f"Point with id {point_id} not found")
+    
     return updated_point
 
 
@@ -125,7 +123,6 @@ def delete_point(
     """Delete a point"""
     point = service.get(id=point_id)
     if not point:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
-        )
+        raise NotFoundException(detail=f"Point with id {point_id} not found")
+    
     return service.remove(id=point_id)

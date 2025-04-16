@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from app.config import settings
 from app.dependencies import init_db
+from app.core.error_handlers import add_exception_handlers
 
 # Initialize the database
 init_db()
@@ -38,6 +39,9 @@ if settings.backend_cors_origins:
 def root():
     return {"message": "Welcome to GeoPoints API"}
 
+
+# Add exception handlers
+add_exception_handlers(app)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
