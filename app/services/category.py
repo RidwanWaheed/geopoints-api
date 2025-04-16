@@ -12,34 +12,34 @@ class CategoryService:
     def __init__(self, repository: CategoryRepository):
         self.repository = repository
 
-    def create(self, db: Session, *, obj_in: CategoryCreate) -> Category:
+    def create(self, *, obj_in: CategoryCreate) -> Category:
         """Create a new category"""
-        return self.repository.create(db=db, obj_in=obj_in)
+        return self.repository.create(obj_in=obj_in)
 
-    def get(self, db: Session, *, id: int) -> Optional[Category]:
+    def get(self, *, id: int) -> Optional[Category]:
         """Get category by ID"""
-        return self.repository.get(db=db, id=id)
+        return self.repository.get(id=id)
 
-    def get_by_name(self, db: Session, *, name: str) -> Optional[Category]:
+    def get_by_name(self, *, name: str) -> Optional[Category]:
         """Get category by name"""
-        return self.repository.get_by_name(db=db, name=name)
+        return self.repository.get_by_name(name=name)
 
     def get_multi(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+        self, *, skip: int = 0, limit: int = 100
     ) -> List[Category]:
         """Get multiple categories"""
-        return self.repository.get_multi(db=db, skip=skip, limit=limit)
+        return self.repository.get_multi(skip=skip, limit=limit)
 
     def update(
-        self, db: Session, *, db_obj: Category, obj_in: CategoryUpdate
+        self, *, db_obj: Category, obj_in: CategoryUpdate
     ) -> Category:
         """Update a category"""
-        return self.repository.update(db=db, db_obj=db_obj, obj_in=obj_in)
+        return self.repository.update(db_obj=db_obj, obj_in=obj_in)
 
-    def remove(self, db: Session, *, id: int) -> Category:
+    def remove(self, *, id: int) -> Category:
         """Remove a category"""
-        return self.repository.remove(db=db, id=id)
+        return self.repository.remove(id=id)
 
-    def count(self, db: Session) -> int:
+    def count(self) -> int:
         """Count total categories"""
-        return db.query(func.count(Category.id)).scalar()
+        return self.repository.count()

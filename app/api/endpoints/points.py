@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+
 from app.api.deps import get_point_service
 from app.dependencies import get_session
 from app.schemas.pagination import PagedResponse, PageParams
@@ -16,11 +17,10 @@ router = APIRouter()
 def create_point(
     *,
     point_in: PointCreate,
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Create a new point"""
-    return service.create(db=db, obj_in=point_in)
+    return service.create(obj_in=point_in)
 
 
 @router.get("/", response_model=PagedResponse[Point])
@@ -28,16 +28,14 @@ def read_points(
     *,
     pagination: PageParams = Depends(),
     category_id: Optional[int] = None,
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Retrieve points with optional category filter and pagination"""
     # Get total count
-    total = service.count(db=db, category_id=category_id)
+    total = service.count(category_id=category_id)
 
     # Get paginated items
     items = service.get_multi(
-        db=db,
         skip=(pagination.page - 1) * pagination.limit,
         limit=pagination.limit,
         category_id=category_id,
@@ -56,11 +54,10 @@ def get_nearby_points(
     lng: float = Query(..., ge=-180, le=180),
     radius: float = Query(..., ge=0, le=100000),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Get points within a radius of a location"""
-    return service.get_nearby(db=db, lat=lat, lng=lng, radius=radius, limit=limit)
+    return service.get_nearby(lat=lat, lng=lng, radius=radius, limit=limit)
 
 
 @router.post("/within", response_model=List[Point])
@@ -68,11 +65,10 @@ def get_points_within_polygon(
     *,
     polygon: str = Query(..., description="WKT polygon string"),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Get points within a polygon boundary"""
-    return service.get_within_polygon(db=db, polygon=polygon, limit=limit)
+    return service.get_within_polygon(polygon=polygon, limit=limit)
 
 
 @router.get("/nearest", response_model=List[NearbyPoint])
@@ -81,24 +77,20 @@ def get_nearest_points(
     lat: float = Query(..., ge=-90, le=90),
     lng: float = Query(..., ge=-180, le=180),
     limit: int = Query(5, ge=1, le=100),
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Get the nearest points to a location"""
-    print("i got here")
-    print(lat, lng)
-    return service.get_nearest(db=db, lat=lat, lng=lng, limit=limit)
+    return service.get_nearest(lat=lat, lng=lng, limit=limit)
 
 
 @router.get("/{point_id}", response_model=Point)
 def read_point(
     *,
     point_id: int,
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Get a specific point by id"""
-    point = service.get(db=db, id=point_id)
+    point = service.get(id=point_id)
     if not point:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
@@ -111,35 +103,30 @@ def update_point(
     *,
     point_id: int,
     point_in: PointUpdate,
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Update a point"""
-    # Import the actual SQLAlchemy model, not the Pydantic schema
-    from app.models.point import Point as PointModel
 
     # Get the database model instance
-    db_point = db.query(PointModel).filter(PointModel.id == point_id).first()
-    if not db_point:
+    updated_point = service.update(id=point_id, obj_in=point_in)
+    if not updated_point:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
         )
 
-    # Now update with the SQLAlchemy model
-    return service.update(db=db, db_obj=db_point, obj_in=point_in)
+    return updated_point
 
 
 @router.delete("/{point_id}", response_model=Point)
 def delete_point(
     *,
     point_id: int,
-    db: Session = Depends(get_session),
     service: PointService = Depends(get_point_service)
 ):
     """Delete a point"""
-    point = service.get(db=db, id=point_id)
+    point = service.get(id=point_id)
     if not point:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
         )
-    return service.remove(db=db, id=point_id)
+    return service.remove(id=point_id)

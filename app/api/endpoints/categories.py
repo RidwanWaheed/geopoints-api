@@ -14,27 +14,25 @@ router = APIRouter()
 def create_category(
     *,
     category_in: CategoryCreate,
-    db: Session = Depends(get_session),
     service: CategoryService = Depends(get_category_service)
 ):
     """Create a new category"""
-    return service.create(db=db, obj_in=category_in)
+    return service.create(obj_in=category_in)
 
 
 @router.get("/", response_model=PagedResponse[Category])
 def read_categories(
     *,
     pagination: PageParams = Depends(),
-    db: Session = Depends(get_session),
     service: CategoryService = Depends(get_category_service)
 ):
     """Retrieve categories with pagination"""
     # Get total count
-    total = service.count(db=db)
+    total = service.count()
 
     # Get paginated items
     items = service.get_multi(
-        db=db, skip=(pagination.page - 1) * pagination.limit, limit=pagination.limit
+        skip=(pagination.page - 1) * pagination.limit, limit=pagination.limit
     )
 
     # Return paginated response
@@ -47,11 +45,10 @@ def read_categories(
 def read_category(
     *,
     category_id: int,
-    db: Session = Depends(get_session),
     service: CategoryService = Depends(get_category_service)
 ):
     """Get a specific category by id"""
-    category = service.get(db=db, id=category_id)
+    category = service.get(id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
@@ -64,29 +61,27 @@ def update_category(
     *,
     category_id: int,
     category_in: CategoryUpdate,
-    db: Session = Depends(get_session),
     service: CategoryService = Depends(get_category_service)
 ):
     """Update a category"""
-    category = service.get(db=db, id=category_id)
+    category = service.get(id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
         )
-    return service.update(db=db, db_obj=category, obj_in=category_in)
+    return service.update(db_obj=category, obj_in=category_in)
 
 
 @router.delete("/{category_id}", response_model=Category)
 def delete_category(
     *,
     category_id: int,
-    db: Session = Depends(get_session),
     service: CategoryService = Depends(get_category_service)
 ):
     """Delete a category"""
-    category = service.get(db=db, id=category_id)
+    category = service.get(id=category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
         )
-    return service.remove(db=db, id=category_id)
+    return service.remove(id=category_id)

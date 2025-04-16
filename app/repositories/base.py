@@ -11,33 +11,34 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
-class Baserepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType]):
+class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    def __init__(self, session: Session, model: Type[ModelType]):
+        self.session = session
         self.model = model
 
-    def get(self, db: Session, id: int) -> Optional[ModelType]:
-        return db.query(self.model).filter(self.model.id == id).first()
+    def get(self, id: int) -> Optional[ModelType]:
+        return self.session.query(self.model).filter(self.model.id == id).first()
 
     def get_multi(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+        self, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
-        return db.query(self.model).offset(skip).limit(limit).all()
+        return self.session.query(self.model).offset(skip).limit(limit).all()
 
-    def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
+    def create(self, *, obj_in: CreateSchemaType) -> ModelType:
         # Convert pydantic model to dict
         obj_in_data = (
             obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
         )
         # Create SQLAlchemy model instance
         db_obj = self.model(**obj_in_data)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        self.session.add(db_obj)
+        self.session.commit()
+        self.session.refresh(db_obj)
         return db_obj
 
     def update(
         self,
-        db: Session,
+       
         *,
         db_obj: ModelType,
         obj_in: Union[UpdateSchemaType, Dict[str, Any]]
@@ -58,13 +59,13 @@ class Baserepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             if hasattr(db_obj, field):
                 setattr(db_obj, field, update_data[field])
 
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        self.session.add(db_obj)
+        self.session.commit()
+        self.session.refresh(db_obj)
         return db_obj
 
-    def remove(self, db: Session, *, id: int) -> ModelType:
-        obj = db.query(self.model).get(id)
-        db.delete(obj)
-        db.commit()
+    def remove(self, *, id: int) -> ModelType:
+        obj = self.session.query(self.model).get(id)
+        self.session.delete(obj)
+        self.session.commit()
         return obj
