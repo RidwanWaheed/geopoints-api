@@ -22,11 +22,13 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: int = 5432
-    DATABASE_URI: Optional[str] = None  # Change from PostgresDsn to str
+    DATABASE_URI: Optional[str] = None
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "insecure-dev-key-change-in-production")
-    ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+    # Security settings
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "insecure-dev-key-change-in-production")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # CORS settings
     BACKEND_CORS_ORIGINS: str = ""
@@ -42,10 +44,11 @@ class Settings(BaseSettings):
             f"{info.data.get('POSTGRES_DB', '')}"
         )
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "extra": "allow",
+    }
 
     @property
     def backend_cors_origins(self):

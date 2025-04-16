@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_category_service
+from app.api.deps import get_category_service, get_current_active_user, get_current_superuser
+from app.models.user import User
 from app.core.exceptions import NotFoundException
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
 from app.schemas.pagination import PagedResponse, PageParams
@@ -14,9 +15,10 @@ router = APIRouter()
 def create_category(
     *,
     category_in: CategoryCreate,
+    current_user: User = Depends(get_current_superuser),
     service: CategoryService = Depends(get_category_service),
 ):
-    """Create a new category"""
+    """Create a new category (requires superuser privileges)"""
     return service.create(obj_in=category_in)
 
 
@@ -57,9 +59,10 @@ def update_category(
     *,
     category_id: int,
     category_in: CategoryUpdate,
+    current_user: User = Depends(get_current_superuser),
     service: CategoryService = Depends(get_category_service),
 ):
-    """Update a category"""
+    """Update a category (requires superuser privileges)"""
     updated_category = service.update(id=category_id, obj_in=category_in)
     if not updated_category:
         raise NotFoundException(detail=f"Category with id {category_id} not found")
@@ -68,9 +71,12 @@ def update_category(
 
 @router.delete("/{category_id}", response_model=Category)
 def delete_category(
-    *, category_id: int, service: CategoryService = Depends(get_category_service)
+    *,
+    category_id: int,
+    current_user: User = Depends(get_current_superuser),
+    service: CategoryService = Depends(get_category_service)
 ):
-    """Delete a category"""
+    """Delete a category (requires superuser privileges)"""
     category = service.get(id=category_id)
     if not category:
         raise NotFoundException(detail=f"Category with id {category_id} not found")

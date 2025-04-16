@@ -1,4 +1,3 @@
-# app/middleware/rate_limiting.py
 from typing import Dict, Tuple
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -49,11 +48,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Get client IP
         client_ip = request.client.host if request.client else "0.0.0.0"
         
-        # Get path
+        # Get path and method
         path = request.url.path
+        method = request.method
         
-        # Get limit for this path
-        limit, window = self._get_limit_for_path(path)
+        # Get limit for this path and method
+        limit, window = self._get_limit_for_request(path, method)
         
         # Check if rate limited
         if rate_limiter.is_rate_limited(client_ip, path, limit, window):

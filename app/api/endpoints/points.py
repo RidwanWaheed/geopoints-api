@@ -3,7 +3,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_point_service
+from app.api.deps import get_current_active_user, get_current_superuser, get_point_service
+from app.models.user import User
 from app.core.exceptions import NotFoundException
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
@@ -14,7 +15,10 @@ router = APIRouter()
 
 @router.post("/", response_model=Point, status_code=status.HTTP_201_CREATED)
 def create_point(
-    *, point_in: PointCreate, service: PointService = Depends(get_point_service)
+    *,
+    point_in: PointCreate,
+    current_user: User = Depends(get_current_active_user),
+    service: PointService = Depends(get_point_service)
 ):
     """Create a new point"""
     return service.create(obj_in=point_in)
@@ -45,7 +49,6 @@ def read_points(
 
 
 @router.get("/nearby", response_model=List[NearbyPoint])
-@limiter.limit("20/minute")
 def get_nearby_points(
     *,
     lat: float = Query(..., ge=-90, le=90, description="Latitude coordinate"),
@@ -102,6 +105,7 @@ def read_point(*, point_id: int, service: PointService = Depends(get_point_servi
 def update_point(
     *,
     point_id: int,
+    current_user: User = Depends(get_current_active_user),
     point_in: PointUpdate,
     service: PointService = Depends(get_point_service),
 ):
@@ -116,8 +120,8 @@ def update_point(
 
 
 @router.delete("/{point_id}", response_model=Point)
-def delete_point(*, point_id: int, service: PointService = Depends(get_point_service)):
-    """Delete a point"""
+def delete_point(*, point_id: int, current_user: User = Depends(get_current_superuser), service: PointService = Depends(get_point_service)):
+    """Delete a point (requires superuser privileges)"""
     point = service.get(id=point_id)
     if not point:
         raise NotFoundException(detail=f"Point with id {point_id} not found")
