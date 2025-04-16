@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.base import Base
+from app.core.utils import to_dict, to_dict_excluding_unset
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -19,16 +20,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def get(self, id: int) -> Optional[ModelType]:
         return self.session.query(self.model).filter(self.model.id == id).first()
 
-    def get_multi(
-        self, *, skip: int = 0, limit: int = 100
-    ) -> List[ModelType]:
+    def get_multi(self, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
         return self.session.query(self.model).offset(skip).limit(limit).all()
 
     def create(self, *, obj_in: CreateSchemaType) -> ModelType:
         # Convert pydantic model to dict
-        obj_in_data = (
-            obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
-        )
+        obj_in_data = to_dict(obj_in)
         # Create SQLAlchemy model instance
         db_obj = self.model(**obj_in_data)
         self.session.add(db_obj)
@@ -37,21 +34,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     def update(
-        self,
-        *,
-        db_obj: ModelType,
-        obj_in: Union[UpdateSchemaType, Dict[str, Any]]
+        self, *, db_obj: ModelType, obj_in: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
         # Handle case when obj_in is a dict
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             # Convert pydantic model to dict, excluding unset values
-            update_data = (
-                obj_in.model_dump(exclude_unset=True)
-                if hasattr(obj_in, "model_dump")
-                else obj_in.model_dump(exclude_unset=True)
-            )
+            update_data = to_dict_excluding_unset(obj_in)
 
         # Apply changes to model
         for field in update_data:

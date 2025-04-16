@@ -2,7 +2,9 @@ from typing import List, Optional
 
 from app.mappers.point_mappers import PointMapper
 from app.repositories.point import PointRepository
-from app.schemas.point import NearbyPoint, Point as PointSchema, PointCreate, PointUpdate
+from app.schemas.point import NearbyPoint
+from app.schemas.point import Point as PointSchema
+from app.schemas.point import PointCreate, PointUpdate
 
 
 class PointService:
@@ -20,11 +22,7 @@ class PointService:
         return PointMapper.to_schema(db_obj)
 
     def get_multi(
-        self,
-        *,
-        skip: int = 0,
-        limit: int = 100,
-        category_id: Optional[int] = None
+        self, *, skip: int = 0, limit: int = 100, category_id: Optional[int] = None
     ) -> List[PointSchema]:
         """Get multiple points with optional category filter"""
         if category_id:
@@ -65,9 +63,7 @@ class PointService:
         self, *, polygon: str, limit: int = 100
     ) -> List[PointSchema]:
         """Get points within a polygon defined in WKT format"""
-        point_objs = self.repository.get_within_polygon(
-            polygon=polygon, limit=limit
-        )
+        point_objs = self.repository.get_within_polygon(polygon=polygon, limit=limit)
         return PointMapper.to_schema_list(point_objs)
 
     def get_nearest(

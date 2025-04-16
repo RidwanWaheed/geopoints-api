@@ -12,8 +12,14 @@ class Category(Base):
     name = Column(String(100), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
     color = Column(String(7), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.timezone('UTC', func.current_timestamp()))
-    updated_at = Column(DateTime(timezone=True), server_default=func.timezone('UTC', func.current_timestamp()), 
-                   onupdate=func.timezone('UTC', func.current_timestamp()))
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.timezone("UTC", func.current_timestamp()),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.timezone("UTC", func.current_timestamp()),
+        onupdate=func.timezone("UTC", func.current_timestamp()),
+    )
 
     points = relationship("Point", back_populates="category")

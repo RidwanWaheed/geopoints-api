@@ -5,10 +5,11 @@ from shapely.geometry import Point as ShapelyPoint
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.core.constants import SpatialRefSys
 from app.models.point import Point
 from app.repositories.base import BaseRepository
 from app.schemas.point import PointCreate, PointUpdate
-from app.core.constants import SpatialRefSys
+from app.spatial.queries import add_distance_to_query, filter_by_distance, point_to_ewkb
 
 
 class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
@@ -24,7 +25,9 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         data = obj_in.model_dump(exclude={"latitude", "longitude"})
 
         # Create a new Point with PostGIS geometry
-        db_obj = Point(**data, geometry=from_shape(shapely_point, srid=SpatialRefSys.WGS84))
+        db_obj = Point(
+            **data, geometry=from_shape(shapely_point, srid=SpatialRefSys.WGS84)
+        )
 
         self.session.add(db_obj)
         self.session.commit()
@@ -32,39 +35,30 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
 
         return db_obj
 
-    def get_by_category(self, *, category_id: int, skip: int = 0, limit: int = 100) -> List[Point]:
+    def get_by_category(
+        self, *, category_id: int, skip: int = 0, limit: int = 100
+    ) -> List[Point]:
         """Get points filtered by category"""
-        return self.session.query(Point).filter(Point.category_id == category_id).offset(skip).limit(limit).all()
-
-    def get_nearby(self, *, lat: float, lng: float, radius: float, limit: int = 100) -> List[Tuple[Point, float]]:
-        """Get points within a specified radius (in meters) of a location
-        
-        Returns:
-            List of tuples containing (Point, distance in meters)
-        """
-        # Create point from coordinates
-        shapely_point = ShapelyPoint(lng, lat)
-        wkb_point = from_shape(shapely_point, srid=SpatialRefSys.WGS84)
-
-        # Query points within radius using PostGIS ST_DWithin
-        # Convert to Web Mercator (SRID 3857) for more accurate distance calculation
-        query = (
-            self.session.query(
-                Point,
-                func.ST_Distance(
-                    func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
-                    func.ST_Transform(wkb_point, SpatialRefSys.WEB_MERCATOR),
-                ).label("distance"),
-            ).filter(
-                func.ST_DWithin(
-                    func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
-                    func.ST_Transform(wkb_point, SpatialRefSys.WEB_MERCATOR),
-                    radius,
-                )
-            )
-            .order_by("distance")
+        return (
+            self.session.query(Point)
+            .filter(Point.category_id == category_id)
+            .offset(skip)
             .limit(limit)
+            .all()
         )
+
+    def get_nearby(
+        self, *, lat: float, lng: float, radius: float, limit: int = 100
+    ) -> List[Tuple[Point, float]]:
+        """Get points within a specified radius (in meters) of a location"""
+        # Create EWKB point from coordinates
+        wkb_point = point_to_ewkb(lat, lng)
+
+        # Build query
+        query = self.session.query(Point)
+        query = add_distance_to_query(query, Point, wkb_point)
+        query = filter_by_distance(query, Point, wkb_point, radius)
+        query = query.order_by("distance").limit(limit)
 
         return query.all()
 
@@ -72,14 +66,20 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         """Get points within a polygon boundary defined as WKT"""
         return (
             self.session.query(Point)
-            .filter(func.ST_Within(Point.geometry, func.ST_GeomFromText(polygon, SpatialRefSys.WGS84)))
+            .filter(
+                func.ST_Within(
+                    Point.geometry, func.ST_GeomFromText(polygon, SpatialRefSys.WGS84)
+                )
+            )
             .limit(limit)
             .all()
         )
 
-    def get_nearest(self, *, lat: float, lng: float, limit: int = 5) -> List[Tuple[Point, float]]:
+    def get_nearest(
+        self, *, lat: float, lng: float, limit: int = 5
+    ) -> List[Tuple[Point, float]]:
         """Get the nearest points to a location
-        
+
         Returns:
             List of tuples containing (Point, distance in meters)
         """
@@ -93,7 +93,10 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
                 func.ST_Distance(
                     func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
                     func.ST_Transform(
-                        func.ST_GeomFromEWKB(from_shape(point, srid=SpatialRefSys.WGS84)), SpatialRefSys.WEB_MERCATOR
+                        func.ST_GeomFromEWKB(
+                            from_shape(point, srid=SpatialRefSys.WGS84)
+                        ),
+                        SpatialRefSys.WEB_MERCATOR,
                     ),
                 ).label("distance"),
             )

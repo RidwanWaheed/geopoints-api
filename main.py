@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -5,10 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import api_router
 from app.config import settings
 from app.dependencies import init_db
+from app.api.deps import cleanup_uow
 from app.core.error_handlers import add_exception_handlers
 
 # Initialize the database
 init_db()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    cleanup_uow()
 
 # Create FastAPI application
 app = FastAPI(

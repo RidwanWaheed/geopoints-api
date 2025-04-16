@@ -15,7 +15,7 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
     def get_by_name(self, *, name: str) -> Optional[Category]:
         """Get category by name"""
         return self.session.query(Category).filter(Category.name == name).first()
-    
+
     def count(self) -> int:
         """Count total categories"""
         return self.session.query(func.count(Category.id)).scalar()

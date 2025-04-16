@@ -7,18 +7,10 @@ T = TypeVar("T")
 
 class PageParams(BaseModel):
     """Pagination parameters"""
-    page: int = Field(
-        1, 
-        ge=1, 
-        description="Page number (1-indexed)",
-        example=1
-    )
+
+    page: int = Field(1, ge=1, description="Page number (1-indexed)", example=1)
     limit: int = Field(
-        20, 
-        ge=1, 
-        le=100, 
-        description="Items per page (max 100)",
-        example=20
+        20, ge=1, le=100, description="Items per page (max 100)", example=20
     )
 
     @field_validator("page")
@@ -35,8 +27,10 @@ class PageParams(BaseModel):
             raise ValueError("Limit must be less than or equal to 100")
         return v
 
+
 class PageMetadata(BaseModel):
     """Pagination metadata"""
+
     total: int = Field(..., description="Total number of items", example=42)
     page: int = Field(..., description="Current page number", example=1)
     limit: int = Field(..., description="Items per page", example=20)

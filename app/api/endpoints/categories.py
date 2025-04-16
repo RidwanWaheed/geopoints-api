@@ -14,7 +14,7 @@ router = APIRouter()
 def create_category(
     *,
     category_in: CategoryCreate,
-    service: CategoryService = Depends(get_category_service)
+    service: CategoryService = Depends(get_category_service),
 ):
     """Create a new category"""
     return service.create(obj_in=category_in)
@@ -24,7 +24,7 @@ def create_category(
 def read_categories(
     *,
     pagination: PageParams = Depends(),
-    service: CategoryService = Depends(get_category_service)
+    service: CategoryService = Depends(get_category_service),
 ):
     """Retrieve categories with pagination"""
     # Get total count
@@ -43,9 +43,7 @@ def read_categories(
 
 @router.get("/{category_id}", response_model=Category)
 def read_category(
-    *,
-    category_id: int,
-    service: CategoryService = Depends(get_category_service)
+    *, category_id: int, service: CategoryService = Depends(get_category_service)
 ):
     """Get a specific category by id"""
     category = service.get(id=category_id)
@@ -59,7 +57,7 @@ def update_category(
     *,
     category_id: int,
     category_in: CategoryUpdate,
-    service: CategoryService = Depends(get_category_service)
+    service: CategoryService = Depends(get_category_service),
 ):
     """Update a category"""
     updated_category = service.update(id=category_id, obj_in=category_in)
@@ -70,9 +68,7 @@ def update_category(
 
 @router.delete("/{category_id}", response_model=Category)
 def delete_category(
-    *,
-    category_id: int,
-    service: CategoryService = Depends(get_category_service)
+    *, category_id: int, service: CategoryService = Depends(get_category_service)
 ):
     """Delete a category"""
     category = service.get(id=category_id)

@@ -3,21 +3,18 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-
 from app.api.deps import get_point_service
+from app.core.exceptions import NotFoundException
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
 from app.services.point import PointService
-from app.core.exceptions import NotFoundException
 
 router = APIRouter()
 
 
 @router.post("/", response_model=Point, status_code=status.HTTP_201_CREATED)
 def create_point(
-    *,
-    point_in: PointCreate,
-    service: PointService = Depends(get_point_service)
+    *, point_in: PointCreate, service: PointService = Depends(get_point_service)
 ):
     """Create a new point"""
     return service.create(obj_in=point_in)
@@ -28,7 +25,7 @@ def read_points(
     *,
     pagination: PageParams = Depends(),
     category_id: Optional[int] = None,
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """Retrieve points with optional category filter and pagination"""
     # Get total count
@@ -54,11 +51,11 @@ def get_nearby_points(
     lng: float = Query(..., ge=-180, le=180, description="Longitude coordinate"),
     radius: float = Query(..., gt=0, le=100000, description="Search radius in meters"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """
     Get points within a specified radius of a location.
-    
+
     - **lat**: Latitude coordinate in WGS84 (between -90 and 90)
     - **lng**: Longitude coordinate in WGS84 (between -180 and 180)
     - **radius**: Search radius in meters (up to 100km)
@@ -72,7 +69,7 @@ def get_points_within_polygon(
     *,
     polygon: str = Query(..., description="WKT polygon string"),
     limit: int = Query(100, ge=1, le=1000),
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """Get points within a polygon boundary"""
     return service.get_within_polygon(polygon=polygon, limit=limit)
@@ -84,23 +81,19 @@ def get_nearest_points(
     lat: float = Query(..., ge=-90, le=90),
     lng: float = Query(..., ge=-180, le=180),
     limit: int = Query(5, ge=1, le=100),
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """Get the nearest points to a location"""
     return service.get_nearest(lat=lat, lng=lng, limit=limit)
 
 
 @router.get("/{point_id}", response_model=Point)
-def read_point(
-    *,
-    point_id: int,
-    service: PointService = Depends(get_point_service)
-):
+def read_point(*, point_id: int, service: PointService = Depends(get_point_service)):
     """Get a specific point by id"""
     point = service.get(id=point_id)
     if not point:
         raise NotFoundException(detail=f"Point with id {point_id} not found")
-    
+
     return point
 
 
@@ -109,7 +102,7 @@ def update_point(
     *,
     point_id: int,
     point_in: PointUpdate,
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """Update a point"""
 
@@ -117,19 +110,15 @@ def update_point(
     updated_point = service.update(id=point_id, obj_in=point_in)
     if not updated_point:
         raise NotFoundException(detail=f"Point with id {point_id} not found")
-    
+
     return updated_point
 
 
 @router.delete("/{point_id}", response_model=Point)
-def delete_point(
-    *,
-    point_id: int,
-    service: PointService = Depends(get_point_service)
-):
+def delete_point(*, point_id: int, service: PointService = Depends(get_point_service)):
     """Delete a point"""
     point = service.get(id=point_id)
     if not point:
         raise NotFoundException(detail=f"Point with id {point_id} not found")
-    
+
     return service.remove(id=point_id)

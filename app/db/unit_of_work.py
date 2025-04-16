@@ -9,26 +9,34 @@ from app.repositories.point import PointRepository
 
 
 class UnitOfWork:
-    """
-    The Unit of Work pattern ensures that repositories share the same database
-    session and provides transaction management.
-    """
+    """Unit of Work pattern implementation"""
 
     def __init__(self):
-        self.session_factory = SessionLocal
+        self._session = None
+
+    @property
+    def session(self):
+        """Get or create the SQLAlchemy session"""
+        if self._session is None:
+            self._session = SessionLocal()
+        return self._session
 
     @contextmanager
     def start(self) -> Generator["UnitOfWork", None, None]:
         """Start a new unit of work (database transaction)"""
-        session = self.session_factory()
         try:
-            self.points = PointRepository(session)
-            self.categories = CategoryRepository(session)
-            
+            # Initialize repositories with session
+            self.points = PointRepository(self.session)
+            self.categories = CategoryRepository(self.session)
+
             yield self
-            session.commit()
+            self.session.commit()
         except Exception:
-            session.rollback()
+            self.session.rollback()
             raise
-        finally:
-            session.close()
+
+    def close(self):
+        """Explicitly close the session when needed"""
+        if self._session is not None:
+            self._session.close()
+            self._session = None
