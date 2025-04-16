@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.models.point import Point
 from app.repositories.base import BaseRepository
 from app.schemas.point import PointCreate, PointUpdate
+from app.core.constants import SpatialRefSys
 
 
 class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
@@ -23,7 +24,7 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         data = obj_in.model_dump(exclude={"latitude", "longitude"})
 
         # Create a new Point with PostGIS geometry
-        db_obj = Point(**data, geometry=from_shape(shapely_point, srid=4326))
+        db_obj = Point(**data, geometry=from_shape(shapely_point, srid=SpatialRefSys.WGS84))
 
         self.session.add(db_obj)
         self.session.commit()
@@ -43,7 +44,7 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         """
         # Create point from coordinates
         shapely_point = ShapelyPoint(lng, lat)
-        wkb_point = from_shape(shapely_point, srid=4326)
+        wkb_point = from_shape(shapely_point, srid=SpatialRefSys.WGS84)
 
         # Query points within radius using PostGIS ST_DWithin
         # Convert to Web Mercator (SRID 3857) for more accurate distance calculation
@@ -51,13 +52,13 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
             self.session.query(
                 Point,
                 func.ST_Distance(
-                    func.ST_Transform(Point.geometry, 3857),
-                    func.ST_Transform(wkb_point, 3857),
+                    func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
+                    func.ST_Transform(wkb_point, SpatialRefSys.WEB_MERCATOR),
                 ).label("distance"),
             ).filter(
                 func.ST_DWithin(
-                    func.ST_Transform(Point.geometry, 3857),
-                    func.ST_Transform(wkb_point, 3857),
+                    func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
+                    func.ST_Transform(wkb_point, SpatialRefSys.WEB_MERCATOR),
                     radius,
                 )
             )
@@ -71,7 +72,7 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         """Get points within a polygon boundary defined as WKT"""
         return (
             self.session.query(Point)
-            .filter(func.ST_Within(Point.geometry, func.ST_GeomFromText(polygon, 4326)))
+            .filter(func.ST_Within(Point.geometry, func.ST_GeomFromText(polygon, SpatialRefSys.WGS84)))
             .limit(limit)
             .all()
         )
@@ -90,9 +91,9 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
             self.session.query(
                 Point,
                 func.ST_Distance(
-                    func.ST_Transform(Point.geometry, 3857),
+                    func.ST_Transform(Point.geometry, SpatialRefSys.WEB_MERCATOR),
                     func.ST_Transform(
-                        func.ST_GeomFromEWKB(from_shape(point, srid=4326)), 3857
+                        func.ST_GeomFromEWKB(from_shape(point, srid=SpatialRefSys.WGS84)), SpatialRefSys.WEB_MERCATOR
                     ),
                 ).label("distance"),
             )
