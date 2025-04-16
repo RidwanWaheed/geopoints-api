@@ -8,6 +8,14 @@ from app.config import settings
 from app.dependencies import init_db
 from app.api.deps import cleanup_uow
 from app.core.error_handlers import add_exception_handlers
+from app.middleware.rate_limiting import RateLimitMiddleware
+
+
+# Define rate limit tiers
+STANDARD_TIER = {"limit": 100, "window": 60}  # 100 requests per minute
+INTENSIVE_TIER = {"limit": 20, "window": 60}  # 20 requests per minute
+WRITE_TIER = {"limit": 30, "window": 60}      # 30 requests per minute
+AUTH_TIER = {"limit": 5, "window": 60}        # 5 requests per minute
 
 # Initialize the database
 init_db()
@@ -33,6 +41,27 @@ app = FastAPI(
         "name": "MIT",
     },
     debug=settings.DEBUG,
+    lifespan=lifespan,
+)
+
+# Add rate limiting middleware with path-specific limits
+app.add_middleware(
+    RateLimitMiddleware,
+    default_limit=100,      # Default: 100 requests per minute
+    default_window=60,
+    path_limits={
+        # Intensive operations
+        f"{settings.API_V1_STR}/points/nearby": INTENSIVE_TIER,
+        f"{settings.API_V1_STR}/points/within": INTENSIVE_TIER,
+        f"{settings.API_V1_STR}/points/nearest": INTENSIVE_TIER,
+        
+        # Write operations (POST, PUT, DELETE handled in middleware)
+        f"{settings.API_V1_STR}/points": WRITE_TIER, 
+        f"{settings.API_V1_STR}/categories": WRITE_TIER,
+        
+        # Default for everything else
+        "*": STANDARD_TIER
+    }
 )
 
 # Set up CORS middleware

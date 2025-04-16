@@ -45,6 +45,7 @@ def read_points(
 
 
 @router.get("/nearby", response_model=List[NearbyPoint])
+@limiter.limit("20/minute")
 def get_nearby_points(
     *,
     lat: float = Query(..., ge=-90, le=90, description="Latitude coordinate"),
