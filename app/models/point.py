@@ -7,7 +7,7 @@ from app.core.constants import SpatialRefSys
 
 
 class Point(Base):
-    __tablename__ = "point"
+    __tablename__ = "points"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, index=True)

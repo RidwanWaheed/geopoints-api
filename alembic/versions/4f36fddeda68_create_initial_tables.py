@@ -42,7 +42,17 @@ def index_exists(indexname):
 
 
 def upgrade():
-    # Skip the PostGIS extension creation, assume it's already created by a superuser
+     # Check if PostGIS extension exists
+    conn = op.get_bind()
+    result = conn.execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'"))
+    
+    if not result.scalar():
+        # Try to create the extension, but don't fail if we don't have privileges
+        try:
+            op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
+        except Exception as e:
+            print(f"Warning: Could not create PostGIS extension: {e}")
+            print("You may need to create it manually with superuser privileges")
 
     # Create category table if it doesn't exist
     if not table_exists("category"):
