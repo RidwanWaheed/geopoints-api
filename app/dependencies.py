@@ -1,17 +1,14 @@
-from typing import Generator
-from sqlalchemy.orm import Session
-
+from app.base import Base
 from app.database import SessionLocal, engine
-from app.models.base import Base
 
-# Initialize database tables
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
-# Database session dependency
-def get_db() -> Generator[Session, None, None]:
-    db = SessionLocal()
+
+def get_session():
+    session = SessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.endpoints import points, categories
+from app.api.endpoints import categories, points
 
 # Create API router
 api_router = APIRouter()

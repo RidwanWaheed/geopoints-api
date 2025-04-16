@@ -1,17 +1,22 @@
-from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel
 from geojson_pydantic import Point as GeoJSONPoint
+
 from app.schemas.category import Category
+
 
 class PointBase(BaseModel):
     name: str
     description: Optional[str] = None
 
+
 class PointCreate(PointBase):
     latitude: float
     longitude: float
     category_id: Optional[int] = None
+
 
 class PointUpdate(PointBase):
     name: Optional[str] = None
@@ -19,15 +24,18 @@ class PointUpdate(PointBase):
     longitude: Optional[float] = None
     category_id: Optional[int] = None
 
+
 class PointInDBBase(PointBase):
     id: int
     category_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 
+
 class Point(PointInDBBase):
     coordinates: GeoJSONPoint
     category: Optional[Category] = None
+
 
 class NearbyPoint(Point):
     distance: float

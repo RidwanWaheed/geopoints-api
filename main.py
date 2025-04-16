@@ -2,10 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import api_router
 from app.config import settings
 from app.dependencies import init_db
-from app.api import api_router
-
 
 # Initialize the database
 init_db()
@@ -27,22 +26,28 @@ if settings.backend_cors_origins:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    print(settings.BACKEND_CORS_ORIGINS)  # Should print a comma-separated string from the .env file
+
+    print(
+        settings.BACKEND_CORS_ORIGINS
+    )  # Should print a comma-separated string from the .env file
     print(settings.backend_cors_origins)  # Should print a list
+
 
 # Add a simple test endpoint
 @app.get("/")
 def root():
     return {"message": "Welcome to GeoPoints API"}
 
+
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 # Add health check endpoint
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     uvicorn.run(
