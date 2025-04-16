@@ -1,18 +1,13 @@
-from app.database import Base
-from app.models.base import BaseModel
-from sqlalchemy import Column, String, Text
+from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.orm import relationship
+from app.database import Base
 
+class Category(Base):
+    __tablename__ = 'category'
 
-class Category(Base, BaseModel):
-    """Category model for points of interest"""
-
+    id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True, index=True)
-    description = Column(Text, nullable=False)
+    description = Column(Text, nullable=True)
     color = Column(String(7), nullable=True)
 
-    # Relationship to points
     points = relationship("Point", back_populates="category")
-
-
-    

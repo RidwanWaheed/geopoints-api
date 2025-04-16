@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, List, Optional
 
 T = TypeVar('T')
 
-class Pageparams(BaseModel):
+class PageParams(BaseModel):
     """Pagination parameters"""
     page: int = Field(1, ge=1, description="Page number")
     limit: int = Field(20, ge=1, le=100, description="Items per page")
@@ -15,7 +15,7 @@ class PageMetadata(BaseModel):
     limit: int = Field(..., description="Items per page")
     pages: int = Field(..., description="Total number of pages")
 
-class PagedResponse(Generic(T), BaseModel):
+class PagedResponse(BaseModel, Generic[T]):
     """Generic response with pagination"""
     data: List[T] = Field(..., description="Data items")
     meta: PageMetadata = Field(..., description="Pagination metadata")
