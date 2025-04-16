@@ -1,24 +1,46 @@
 from typing import Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 T = TypeVar("T")
 
 
 class PageParams(BaseModel):
     """Pagination parameters"""
+    page: int = Field(
+        1, 
+        ge=1, 
+        description="Page number (1-indexed)",
+        example=1
+    )
+    limit: int = Field(
+        20, 
+        ge=1, 
+        le=100, 
+        description="Items per page (max 100)",
+        example=20
+    )
 
-    page: int = Field(1, ge=1, description="Page number")
-    limit: int = Field(20, ge=1, le=100, description="Items per page")
+    @field_validator("page")
+    def validate_page(cls, v):
+        if v < 1:
+            raise ValueError("Page must be greater than or equal to 1")
+        return v
 
+    @field_validator("limit")
+    def validate_limit(cls, v):
+        if v < 1:
+            raise ValueError("Limit must be greater than or equal to 1")
+        if v > 100:
+            raise ValueError("Limit must be less than or equal to 100")
+        return v
 
 class PageMetadata(BaseModel):
     """Pagination metadata"""
-
-    total: int = Field(..., description="Total number of items")
-    page: int = Field(..., description="Current page number")
-    limit: int = Field(..., description="Items per page")
-    pages: int = Field(..., description="Total number of pages")
+    total: int = Field(..., description="Total number of items", example=42)
+    page: int = Field(..., description="Current page number", example=1)
+    limit: int = Field(..., description="Items per page", example=20)
+    pages: int = Field(..., description="Total number of pages", example=3)
 
 
 class PagedResponse(BaseModel, Generic[T]):

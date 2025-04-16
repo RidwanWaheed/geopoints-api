@@ -50,13 +50,20 @@ def read_points(
 @router.get("/nearby", response_model=List[NearbyPoint])
 def get_nearby_points(
     *,
-    lat: float = Query(..., ge=-90, le=90),
-    lng: float = Query(..., ge=-180, le=180),
-    radius: float = Query(..., ge=0, le=100000),
-    limit: int = Query(100, ge=1, le=1000),
+    lat: float = Query(..., ge=-90, le=90, description="Latitude coordinate"),
+    lng: float = Query(..., ge=-180, le=180, description="Longitude coordinate"),
+    radius: float = Query(..., gt=0, le=100000, description="Search radius in meters"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of results"),
     service: PointService = Depends(get_point_service)
 ):
-    """Get points within a radius of a location"""
+    """
+    Get points within a specified radius of a location.
+    
+    - **lat**: Latitude coordinate in WGS84 (between -90 and 90)
+    - **lng**: Longitude coordinate in WGS84 (between -180 and 180)
+    - **radius**: Search radius in meters (up to 100km)
+    - **limit**: Maximum number of results to return (default: 100)
+    """
     return service.get_nearby(lat=lat, lng=lng, radius=radius, limit=limit)
 
 

@@ -14,7 +14,17 @@ init_db()
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_DESCRIPTION,
+    version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc",
+    contact={
+        "name": "Ridwan Waheed",
+        "email": "waheedridwan96@gmail.com",
+    },
+    license_info={
+        "name": "MIT",
+    },
     debug=settings.DEBUG,
 )
 
