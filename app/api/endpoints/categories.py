@@ -62,13 +62,9 @@ def update_category(
     service: CategoryService = Depends(get_category_service)
 ):
     """Update a category"""
-    # First get the existing category
-    category = service.get(id=category_id)
-    if not category:
+    updated_category = service.update(id=category_id, obj_in=category_in)
+    if not updated_category:
         raise NotFoundException(detail=f"Category with id {category_id} not found")
-    
-    # Now update it
-    updated_category = service.update(db_obj=category, obj_in=category_in)
     return updated_category
 
 

@@ -33,8 +33,12 @@ class CategoryService:
 
     def update(
         self, *, db_obj: CategorySchema, obj_in: CategoryUpdate
-    ) -> CategorySchema:
+    ) -> Optional[CategorySchema]:
         """Update a category"""
+        db_obj = self.repository.get(id=id)
+        if not db_obj:
+            return None
+        
         updated_obj = self.repository.update(db_obj=db_obj, obj_in=obj_in)
         return CategoryMapper.to_schema(updated_obj)
 
