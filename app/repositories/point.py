@@ -1,9 +1,9 @@
 from typing import List
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session
 from geoalchemy2.shape import from_shape
 from shapely.geometry import Point as ShapelyPoint
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from app.models.point import Point
 from app.repositories.base import Baserepository
@@ -40,31 +40,29 @@ class PointRepository(Baserepository[Point, PointCreate, PointUpdate]):
         ).all()
 
     def get_nearby(
-        self, db: Session, *, lat: float, long: float, radius: float, limit: int = 100
+        self, db: Session, *, lat: float, lng: float, radius: float, limit: int = 100
     ) -> List[tuple]:
         """Get points within a specified radius (in meters) of a location"""
         # Create point from coordinates
-        shapely_point = ShapelyPoint(long, lat)
+        shapely_point = ShapelyPoint(lng, lat)
+        wkb_point = from_shape(shapely_point, srid=4326)
 
         # Query points within radius using PostGIS ST_DWithin
         # Convert to Web Mercator (SRID 3857) for more accurate distance calculation
         query = (
-            db.query(
-                Point,
-                func.ST_Distance(
-                    func.ST_Transform(Point.geometry, 3857),
-                    func.ST_Transform(
-                        func.ST_GeomFromWKB(from_shape(shapely_point, srid=4326)), 3857
-                    ),
-                ).label("distance"),
-            )
-            .filter(
-                func.ST_Within(
-                    func.ST_Transform(Point.geometry, 3857),
-                    func.ST_Transform(
-                        func.ST_GeomFromEWKB(from_shape(shapely_point, srid=4326)), 3857
-                    ),
-                    radius,
+            (
+                db.query(
+                    Point,
+                    func.ST_Distance(
+                        func.ST_Transform(Point.geometry, 3857),
+                        func.ST_Transform(wkb_point, 3857),
+                    ).label("distance"),
+                ).filter(
+                    func.ST_DWithin(
+                        func.ST_Transform(Point.geometry, 3857),
+                        func.ST_Transform(wkb_point, 3857),
+                        radius,
+                    )
                 )
             )
             .order_by("distance")
@@ -95,7 +93,7 @@ class PointRepository(Baserepository[Point, PointCreate, PointUpdate]):
         query = (
             db.query(
                 Point,
-                func.Distance(
+                func.ST_Distance(
                     func.ST_Transform(Point.geometry, 3857),
                     func.ST_Transform(
                         func.ST_GeomFromEWKB(from_shape(point, srid=4326)), 3857

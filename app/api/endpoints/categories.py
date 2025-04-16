@@ -1,11 +1,11 @@
-from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
 from app.api.deps import get_category_service
-from app.services.category import CategoryService
-from app.schemas.pagination import PagedResponse, PageParams
+from app.dependencies import get_session
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
+from app.schemas.pagination import PagedResponse, PageParams
+from app.services.category import CategoryService
 
 router = APIRouter()
 

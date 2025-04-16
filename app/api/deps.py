@@ -1,9 +1,9 @@
 from fastapi import Depends
 
-from app.services.point import PointService
-from app.services.category import CategoryService
-from app.repositories.point import PointRepository
 from app.repositories.category import CategoryRepository
+from app.repositories.point import PointRepository
+from app.services.category import CategoryService
+from app.services.point import PointService
 
 
 # Repository dependencies

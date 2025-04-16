@@ -1,13 +1,13 @@
 from typing import List, Optional
 
-from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
 from app.api.deps import get_point_service
-from app.services.point import PointService
+from app.dependencies import get_session
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
+from app.services.point import PointService
 
 router = APIRouter()
 
@@ -63,6 +63,33 @@ def get_nearby_points(
     return service.get_nearby(db=db, lat=lat, lng=lng, radius=radius, limit=limit)
 
 
+@router.post("/within", response_model=List[Point])
+def get_points_within_polygon(
+    *,
+    polygon: str = Query(..., description="WKT polygon string"),
+    limit: int = Query(100, ge=1, le=1000),
+    db: Session = Depends(get_session),
+    service: PointService = Depends(get_point_service)
+):
+    """Get points within a polygon boundary"""
+    return service.get_within_polygon(db=db, polygon=polygon, limit=limit)
+
+
+@router.get("/nearest", response_model=List[NearbyPoint])
+def get_nearest_points(
+    *,
+    lat: float = Query(..., ge=-90, le=90),
+    lng: float = Query(..., ge=-180, le=180),
+    limit: int = Query(5, ge=1, le=100),
+    db: Session = Depends(get_session),
+    service: PointService = Depends(get_point_service)
+):
+    """Get the nearest points to a location"""
+    print("i got here")
+    print(lat, lng)
+    return service.get_nearest(db=db, lat=lat, lng=lng, limit=limit)
+
+
 @router.get("/{point_id}", response_model=Point)
 def read_point(
     *,
@@ -88,12 +115,18 @@ def update_point(
     service: PointService = Depends(get_point_service)
 ):
     """Update a point"""
-    point = service.get(db=db, id=point_id)
-    if not point:
+    # Import the actual SQLAlchemy model, not the Pydantic schema
+    from app.models.point import Point as PointModel
+
+    # Get the database model instance
+    db_point = db.query(PointModel).filter(PointModel.id == point_id).first()
+    if not db_point:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
         )
-    return service.update(db=db, db_obj=point, obj_in=point_in)
+
+    # Now update with the SQLAlchemy model
+    return service.update(db=db, db_obj=db_point, obj_in=point_in)
 
 
 @router.delete("/{point_id}", response_model=Point)
@@ -110,28 +143,3 @@ def delete_point(
             status_code=status.HTTP_404_NOT_FOUND, detail="Point not found"
         )
     return service.remove(db=db, id=point_id)
-
-
-@router.post("/within", response_model=List[Point])
-def get_points_within_polygon(
-    *,
-    polygon: str = Query(..., description="WKT polygon string"),
-    limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_session),
-    service: PointService = Depends(get_point_service)
-):
-    """Get points within a polygon boundary"""
-    return service.get_within_polygon(db=db, polygon=polygon, limit=limit)
-
-
-@router.get("/nearest", response_model=List[NearbyPoint])
-def get_nearest_points(
-    *,
-    lat: float = Query(..., ge=-90, le=90),
-    lng: float = Query(..., ge=-180, le=180),
-    limit: int = Query(5, ge=1, le=100),
-    db: Session = Depends(get_session),
-    service: PointService = Depends(get_point_service)
-):
-    """Get the nearest points to a location"""
-    return service.get_nearest(db=db, lat=lat, lng=lng, limit=limit)

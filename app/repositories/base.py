@@ -1,8 +1,8 @@
+# app/repositories/base.py
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from fastapi.encoders import jsonable_encoder
 
 from app.base import Base
 
@@ -24,7 +24,11 @@ class Baserepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         return db.query(self.model).offset(skip).limit(limit).all()
 
     def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in)
+        # Convert pydantic model to dict
+        obj_in_data = (
+            obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
+        )
+        # Create SQLAlchemy model instance
         db_obj = self.model(**obj_in_data)
         db.add(db_obj)
         db.commit()
@@ -38,13 +42,20 @@ class Baserepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db_obj: ModelType,
         obj_in: Union[UpdateSchemaType, Dict[str, Any]]
     ) -> ModelType:
-        obj_data = jsonable_encoder(db_obj)
+        # Handle case when obj_in is a dict
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
-        for field in obj_data:
-            if field in update_data:
+            # Convert pydantic model to dict, excluding unset values
+            update_data = (
+                obj_in.model_dump(exclude_unset=True)
+                if hasattr(obj_in, "model_dump")
+                else obj_in.dict(exclude_unset=True)
+            )
+
+        # Apply changes to model
+        for field in update_data:
+            if hasattr(db_obj, field):
                 setattr(db_obj, field, update_data[field])
 
         db.add(db_obj)

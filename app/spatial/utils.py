@@ -4,10 +4,10 @@ from geoalchemy2.shape import to_shape
 from geojson_pydantic import Point as GeoJSONPoint
 
 
-def point_to_geojson(geometry) -> GeoJSONPoint:
+def point_to_geojson(geometry):
     """Convert PostGIS geometry to GeoJSON"""
     shapely_point = to_shape(geometry)
-    return GeoJSONPoint(coordinates=[shapely_point.x, shapely_point.y])
+    return GeoJSONPoint(type="Point", coordinates=[shapely_point.x, shapely_point.y])
 
 
 def coords_to_wkt(latitude: float, longitude: float) -> str:

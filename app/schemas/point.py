@@ -1,8 +1,8 @@
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 
-from pydantic import BaseModel
 from geojson_pydantic import Point as GeoJSONPoint
+from pydantic import BaseModel
 
 from app.schemas.category import Category
 
