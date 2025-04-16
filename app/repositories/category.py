@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ class CategoryRepository(BaseRepository[Category, CategoryCreate, CategoryUpdate
 
     def get_by_name(self, *, name: str) -> Optional[Category]:
         """Get category by name"""
-        return self.session.session.query(Category).filter(Category.name == name).first()
+        return self.session.query(Category).filter(Category.name == name).first()
     
     def count(self) -> int:
         """Count total categories"""

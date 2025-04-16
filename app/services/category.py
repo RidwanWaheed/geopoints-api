@@ -1,44 +1,47 @@
 from typing import List, Optional
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
-from app.models.category import Category
+from app.mappers.category_mapper import CategoryMapper
 from app.repositories.category import CategoryRepository
-from app.schemas.category import CategoryCreate, CategoryUpdate
+from app.schemas.category import Category as CategorySchema, CategoryCreate, CategoryUpdate
 
 
 class CategoryService:
     def __init__(self, repository: CategoryRepository):
         self.repository = repository
 
-    def create(self, *, obj_in: CategoryCreate) -> Category:
+    def create(self, *, obj_in: CategoryCreate) -> CategorySchema:
         """Create a new category"""
-        return self.repository.create(obj_in=obj_in)
+        db_obj = self.repository.create(obj_in=obj_in)
+        return CategoryMapper.to_schema(db_obj)
 
-    def get(self, *, id: int) -> Optional[Category]:
+    def get(self, *, id: int) -> Optional[CategorySchema]:
         """Get category by ID"""
-        return self.repository.get(id=id)
+        db_obj = self.repository.get(id=id)
+        return CategoryMapper.to_schema(db_obj)
 
-    def get_by_name(self, *, name: str) -> Optional[Category]:
+    def get_by_name(self, *, name: str) -> Optional[CategorySchema]:
         """Get category by name"""
-        return self.repository.get_by_name(name=name)
+        db_obj = self.repository.get_by_name(name=name)
+        return CategoryMapper.to_schema(db_obj)
 
     def get_multi(
         self, *, skip: int = 0, limit: int = 100
-    ) -> List[Category]:
+    ) -> List[CategorySchema]:
         """Get multiple categories"""
-        return self.repository.get_multi(skip=skip, limit=limit)
+        db_objs = self.repository.get_multi(skip=skip, limit=limit)
+        return CategoryMapper.to_schema_list(db_objs)
 
     def update(
-        self, *, db_obj: Category, obj_in: CategoryUpdate
-    ) -> Category:
+        self, *, db_obj: CategorySchema, obj_in: CategoryUpdate
+    ) -> CategorySchema:
         """Update a category"""
-        return self.repository.update(db_obj=db_obj, obj_in=obj_in)
+        updated_obj = self.repository.update(db_obj=db_obj, obj_in=obj_in)
+        return CategoryMapper.to_schema(updated_obj)
 
-    def remove(self, *, id: int) -> Category:
+    def remove(self, *, id: int) -> CategorySchema:
         """Remove a category"""
-        return self.repository.remove(id=id)
+        removed_obj = self.repository.remove(id=id)
+        return CategoryMapper.to_schema(removed_obj)
 
     def count(self) -> int:
         """Count total categories"""
