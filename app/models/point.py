@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.base import Base
@@ -25,3 +25,10 @@ class Point(Base):
     )
 
     category = relationship("Category", back_populates="points")
+
+    # Define indexes using SQLAlchemy
+    __table_args__ = (
+        Index('idx_points_geometry', 'geometry', postgresql_using='gist'),
+        Index('idx_points_geography', func.geography('geometry'), postgresql_using='gist'),
+        # KNN index can't be defined directly in SQLAlchemy, SQL written in the migration file
+    )

@@ -9,6 +9,7 @@ from app.dependencies import init_db
 from app.api.deps import cleanup_uow
 from app.core.error_handlers import add_exception_handlers
 from app.middleware.rate_limiting import RateLimitMiddleware
+from app.middleware.query_monitor import QueryMonitorMiddleware
 
 
 # Define rate limit tiers
@@ -43,6 +44,9 @@ app = FastAPI(
     debug=settings.DEBUG,
     lifespan=lifespan,
 )
+
+# Add query monitoring middleware
+app.add_middleware(QueryMonitorMiddleware)
 
 # Add rate limiting middleware with path-specific limits
 app.add_middleware(
