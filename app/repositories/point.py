@@ -9,7 +9,12 @@ from app.core.constants import SpatialRefSys
 from app.models.point import Point
 from app.repositories.base import BaseRepository
 from app.schemas.point import PointCreate, PointUpdate
-from app.spatial.queries import add_distance_to_query, filter_by_distance, nearest_neighbor_query, point_to_ewkb
+from app.spatial.queries import (
+    add_distance_to_query,
+    filter_by_distance,
+    nearest_neighbor_query,
+    point_to_ewkb,
+)
 
 
 class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
@@ -58,7 +63,7 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
         query = self.session.query(Point)
         query = add_distance_to_query(query, Point, wkb_point)
         query = filter_by_distance(query, Point, wkb_point, radius)
-        
+
         # Order by distance and limit results
         query = query.order_by("distance").limit(limit)
 
@@ -76,13 +81,17 @@ class PointRepository(BaseRepository[Point, PointCreate, PointUpdate]):
             self.session.query(Point)
             .filter(
                 Point.geometry.intersects(
-                    func.ST_MakeValid(func.ST_GeomFromText(polygon, SpatialRefSys.WGS84))
+                    func.ST_MakeValid(
+                        func.ST_GeomFromText(polygon, SpatialRefSys.WGS84)
+                    )
                 )
             )
             .filter(
                 func.ST_Within(
                     Point.geometry,
-                    func.ST_MakeValid(func.ST_GeomFromText(polygon, SpatialRefSys.WGS84))
+                    func.ST_MakeValid(
+                        func.ST_GeomFromText(polygon, SpatialRefSys.WGS84)
+                    ),
                 )
             )
             .limit(limit)

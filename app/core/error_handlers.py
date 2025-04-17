@@ -58,7 +58,7 @@ def add_exception_handlers(app: FastAPI) -> None:
             status_code=500,
             content={"error": "Internal server error"},
         )
-    
+
     @app.exception_handler(RequestValidationError)
     async def handle_validation_exception(
         request: Request, exc: RequestValidationError
@@ -66,12 +66,14 @@ def add_exception_handlers(app: FastAPI) -> None:
         """Handle validation errors from pydantic models"""
         errors = []
         for error in exc.errors():
-            errors.append({
-                "loc": error.get("loc", []),
-                "msg": error.get("msg", ""),
-                "type": error.get("type", "")
-            })
-        
+            errors.append(
+                {
+                    "loc": error.get("loc", []),
+                    "msg": error.get("msg", ""),
+                    "type": error.get("type", ""),
+                }
+            )
+
         return JSONResponse(
             status_code=422,
             content={

@@ -1,28 +1,28 @@
 import os
 import sys
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy_utils import database_exists, create_database, drop_database
+from sqlalchemy_utils import create_database, database_exists, drop_database
 
 # Add project root to path to ensure imports work correctly
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.base import Base
+from app.core.security import get_password_hash
 from app.models.category import Category
 from app.models.point import Point
 from app.models.user import User
-from app.core.security import get_password_hash
-from app.repositories.point import PointRepository
 from app.repositories.category import CategoryRepository
+from app.repositories.point import PointRepository
 from app.repositories.user import UserRepository
 from main import app  # Import the FastAPI app
 
 # Test database URL
 TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL", 
-    "postgresql://postgres:postgres@localhost/geopoints_test"
+    "TEST_DATABASE_URL", "postgresql://postgres:postgres@localhost/geopoints_test"
 )
 
 
@@ -31,20 +31,22 @@ def test_db_engine():
     """Create a test database and return an SQLAlchemy engine."""
     # Create test database if it doesn't exist
     engine = create_engine(TEST_DATABASE_URL)
-    
+
     if database_exists(engine.url):
         # If database exists, drop it to start fresh
         drop_database(engine.url)
-    
+
     create_database(engine.url)
-    
+
     # Create PostGIS extension and tables using direct SQL
     with engine.connect() as conn:
         # Create PostGIS extension
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-        
+
         # Create users table
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             CREATE TABLE users (
                 id SERIAL PRIMARY KEY,
                 email VARCHAR(100) NOT NULL UNIQUE,
@@ -55,10 +57,14 @@ def test_db_engine():
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP WITH TIME ZONE
             )
-        """))
-        
+        """
+            )
+        )
+
         # Create categories table
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             CREATE TABLE categories (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL UNIQUE,
@@ -67,10 +73,14 @@ def test_db_engine():
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
-        """))
-        
+        """
+            )
+        )
+
         # Create points table with PostGIS geometry
-        conn.execute(text("""
+        conn.execute(
+            text(
+                """
             CREATE TABLE points (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
@@ -80,17 +90,23 @@ def test_db_engine():
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
-        """))
-        
+        """
+            )
+        )
+
         # Create spatial indexes
-        conn.execute(text("CREATE INDEX idx_points_geometry ON points USING GIST (geometry)"))
+        conn.execute(
+            text("CREATE INDEX idx_points_geometry ON points USING GIST (geometry)")
+        )
         conn.execute(text("CREATE INDEX idx_points_name ON points USING btree (name)"))
-        conn.execute(text("CREATE INDEX idx_categories_name ON categories USING btree (name)"))
-        
+        conn.execute(
+            text("CREATE INDEX idx_categories_name ON categories USING btree (name)")
+        )
+
         conn.commit()
-    
+
     yield engine
-    
+
     # Teardown - drop test database
     if os.environ.get("TEST_KEEP_DB") != "1":
         drop_database(engine.url)
@@ -101,11 +117,13 @@ def db_session(test_db_engine):
     """Create a fresh database session for a test."""
     connection = test_db_engine.connect()
     transaction = connection.begin()
-    
+
     # Create a session bound to the connection
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    TestingSessionLocal = sessionmaker(
+        autocommit=False, autoflush=False, bind=connection
+    )
     db = TestingSessionLocal()
-    
+
     try:
         yield db
     except Exception:
@@ -122,20 +140,21 @@ def db_session(test_db_engine):
 @pytest.fixture(scope="function")
 def client(db_session):
     """Create a test client with a patched database session."""
+
     # Define override function for dependency injection
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     # Override the get_db dependency in the FastAPI app
     # Find the correct dependency to override based on your app structure
     from app.api.deps import get_uow
-    
+
     # Store original dependencies
     original_dependencies = app.dependency_overrides.copy()
-    
+
     # Override UnitOfWork to use our test session
     class TestUnitOfWork:
         def __init__(self, session):
@@ -143,32 +162,32 @@ def client(db_session):
             self.points = PointRepository(session)
             self.categories = CategoryRepository(session)
             self.users = UserRepository(session)
-        
+
         def start(self):
             class ContextManager:
                 def __init__(self, uow):
                     self.uow = uow
-                
+
                 def __enter__(self):
                     return self.uow
-                
+
                 def __exit__(self, exc_type, exc_val, exc_tb):
                     pass
-            
+
             return ContextManager(self)
-        
+
         def close(self):
             pass
-    
+
     test_uow = TestUnitOfWork(db_session)
-    
+
     # Override the UoW dependency
     app.dependency_overrides[get_uow] = lambda: test_uow
-    
+
     # Create test client
     with TestClient(app) as test_client:
         yield test_client
-    
+
     # Restore original dependencies
     app.dependency_overrides = original_dependencies
 
@@ -199,22 +218,22 @@ def test_categories(db_session):
     db_session.execute(text("DELETE FROM points"))  # Delete points first
     db_session.execute(text("DELETE FROM categories"))
     db_session.commit()
-    
+
     # Then create categories
     categories = [
         Category(name="Restaurant", description="Places to eat", color="#FF5733"),
         Category(name="Museum", description="Cultural venues", color="#33FF57"),
-        Category(name="Park", description="Green spaces", color="#5733FF")
+        Category(name="Park", description="Green spaces", color="#5733FF"),
     ]
-    
+
     db_session.add_all(categories)
     db_session.commit()
-    
+
     for category in categories:
         db_session.refresh(category)
-    
+
     yield categories
-    
+
     # Clean up points first to avoid FK constraints
     db_session.execute(text("DELETE FROM points"))
     db_session.execute(text("DELETE FROM categories"))
@@ -227,52 +246,52 @@ def test_points(db_session, test_categories):
     # Clean up any existing data first
     db_session.execute(text("DELETE FROM points"))
     db_session.commit()
-    
+
     from geoalchemy2.shape import from_shape
     from shapely.geometry import Point as ShapelyPoint
-    
+
     points = [
         # Berlin tourist spots
         Point(
             name="Brandenburg Gate",
             description="Famous landmark in Berlin",
             geometry=from_shape(ShapelyPoint(13.3777, 52.5163), srid=4326),
-            category_id=test_categories[2].id  # Park
+            category_id=test_categories[2].id,  # Park
         ),
         Point(
             name="Berlin TV Tower",
             description="Iconic tower with observation deck",
             geometry=from_shape(ShapelyPoint(13.4094, 52.5208), srid=4326),
-            category_id=test_categories[1].id  # Museum
+            category_id=test_categories[1].id,  # Museum
         ),
         Point(
             name="Checkpoint Charlie",
             description="Historic Cold War site",
             geometry=from_shape(ShapelyPoint(13.3904, 52.5077), srid=4326),
-            category_id=test_categories[1].id  # Museum
+            category_id=test_categories[1].id,  # Museum
         ),
         Point(
             name="Tiergarten",
             description="Large park in central Berlin",
             geometry=from_shape(ShapelyPoint(13.3500, 52.5150), srid=4326),
-            category_id=test_categories[2].id  # Park
+            category_id=test_categories[2].id,  # Park
         ),
         Point(
             name="Burgermeister",
             description="Popular burger joint",
             geometry=from_shape(ShapelyPoint(13.4398, 52.5005), srid=4326),
-            category_id=test_categories[0].id  # Restaurant
+            category_id=test_categories[0].id,  # Restaurant
         ),
     ]
-    
+
     db_session.add_all(points)
     db_session.commit()
-    
+
     for point in points:
         db_session.refresh(point)
-    
+
     yield points
-    
+
     # Clean up after test
     db_session.execute(text("DELETE FROM points"))
     db_session.commit()
@@ -284,39 +303,39 @@ def test_users(db_session):
     # Clean up any existing data first
     db_session.execute(text("DELETE FROM users"))
     db_session.commit()
-    
+
     users = [
         User(
             email="admin@example.com",
             username="admin",
             hashed_password=get_password_hash("Admin123!"),
             is_active=True,
-            is_superuser=True
+            is_superuser=True,
         ),
         User(
             email="user@example.com",
             username="regular_user",
             hashed_password=get_password_hash("User123!"),
             is_active=True,
-            is_superuser=False
+            is_superuser=False,
         ),
         User(
             email="inactive@example.com",
             username="inactive_user",
             hashed_password=get_password_hash("Inactive123!"),
             is_active=False,
-            is_superuser=False
-        )
+            is_superuser=False,
+        ),
     ]
-    
+
     db_session.add_all(users)
     db_session.commit()
-    
+
     for user in users:
         db_session.refresh(user)
-    
+
     yield users
-    
+
     # Clean up after test
     db_session.execute(text("DELETE FROM users"))
     db_session.commit()
@@ -327,15 +346,14 @@ def admin_token(client, test_users):
     """Get an authentication token for the admin user."""
     response = client.post(
         "/api/v1/auth/token",
-        data={
-            "username": "admin@example.com",
-            "password": "Admin123!"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "admin@example.com", "password": "Admin123!"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    
+
     token_data = response.json()
-    assert "access_token" in token_data, f"Failed to get admin token. Response: {response.text}"
+    assert (
+        "access_token" in token_data
+    ), f"Failed to get admin token. Response: {response.text}"
     return token_data["access_token"]
 
 
@@ -344,13 +362,12 @@ def user_token(client, test_users):
     """Get an authentication token for the regular user."""
     response = client.post(
         "/api/v1/auth/token",
-        data={
-            "username": "user@example.com",
-            "password": "User123!"
-        },
-        headers={"Content-Type": "application/x-www-form-urlencoded"}
+        data={"username": "user@example.com", "password": "User123!"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    
+
     token_data = response.json()
-    assert "access_token" in token_data, f"Failed to get user token. Response: {response.text}"
+    assert (
+        "access_token" in token_data
+    ), f"Failed to get user token. Response: {response.text}"
     return token_data["access_token"]

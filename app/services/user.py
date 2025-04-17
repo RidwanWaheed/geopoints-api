@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.core.exceptions import BadRequestException
 from app.core.security import create_access_token
 from app.core.utils import utc_now
 from app.repositories.user import UserRepository
 from app.schemas.user import Token
 from app.schemas.user import User as UserSchema
 from app.schemas.user import UserCreate, UserUpdate
-from app.core.exceptions import BadRequestException
 
 
 class UserService:
@@ -20,12 +20,12 @@ class UserService:
         existing_user = self.repository.get_by_email(email=obj_in.email)
         if existing_user:
             raise BadRequestException(detail="Email already registered")
-            
+
         # Check if username already exists
         existing_user = self.repository.get_by_username(username=obj_in.username)
         if existing_user:
             raise BadRequestException(detail="Username already taken")
-            
+
         db_obj = self.repository.create(obj_in=obj_in)
         return UserSchema.model_validate(db_obj)
 

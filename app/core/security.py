@@ -13,7 +13,7 @@ pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
     bcrypt__ident="2b",  # Use the most common bcrypt identifier
-    bcrypt__rounds=12    # Set a reasonable number of rounds for security/performance
+    bcrypt__rounds=12,  # Set a reasonable number of rounds for security/performance
 )
 
 # Token blacklist - for invalidated tokens

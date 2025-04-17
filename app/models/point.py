@@ -5,8 +5,9 @@ from sqlalchemy.orm import relationship
 from app.base import Base
 from app.core.constants import SpatialRefSys
 
+
 class Point(Base):
-    __tablename__ = "points" 
+    __tablename__ = "points"
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -28,7 +29,9 @@ class Point(Base):
 
     # Define indexes using SQLAlchemy
     __table_args__ = (
-        Index('idx_points_geometry', 'geometry', postgresql_using='gist'),
-        Index('idx_points_geography', func.geography('geometry'), postgresql_using='gist'),
+        Index("idx_points_geometry", "geometry", postgresql_using="gist"),
+        Index(
+            "idx_points_geography", func.geography("geometry"), postgresql_using="gist"
+        ),
         # KNN index can't be defined directly in SQLAlchemy, SQL written in the migration file
     )
