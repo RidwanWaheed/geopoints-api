@@ -39,10 +39,8 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
         Authenticate a user by username or email and password
         The username parameter could be either a username or email
         """
-        # First try as email
         user = self.get_by_email(email=email)
 
-        # If not found, try as username
         if not user:
             user = self.get_by_username(username=email)
 
@@ -50,6 +48,9 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
         if not user:
             return None
         if not verify_password(password, user.hashed_password):
+            return None
+        
+        if not user.is_active:
             return None
 
         return user

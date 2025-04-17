@@ -33,7 +33,7 @@ def add_distance_to_query(query: Query, model_class, point_geom: WKBElement) -> 
     # Use ST_Distance_Sphere instead of transforming to Web Mercator
     # This is faster and accurate enough for most use cases
     return query.add_columns(
-        func.ST_Distance_Sphere(
+        func.ST_DistanceSphere(
             model_class.geometry, 
             point_geom
         ).label("distance")

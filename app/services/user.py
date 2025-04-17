@@ -7,6 +7,7 @@ from app.repositories.user import UserRepository
 from app.schemas.user import Token
 from app.schemas.user import User as UserSchema
 from app.schemas.user import UserCreate, UserUpdate
+from app.core.exceptions import BadRequestException
 
 
 class UserService:
@@ -15,6 +16,16 @@ class UserService:
 
     def create(self, *, obj_in: UserCreate) -> UserSchema:
         """Create a new user"""
+        # Check if email already exists
+        existing_user = self.repository.get_by_email(email=obj_in.email)
+        if existing_user:
+            raise BadRequestException(detail="Email already registered")
+            
+        # Check if username already exists
+        existing_user = self.repository.get_by_username(username=obj_in.username)
+        if existing_user:
+            raise BadRequestException(detail="Username already taken")
+            
         db_obj = self.repository.create(obj_in=obj_in)
         return UserSchema.model_validate(db_obj)
 
