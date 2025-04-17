@@ -24,9 +24,8 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     DATABASE_URI: Optional[str] = None
 
-
     # Security settings
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "insecure-dev-key-change-in-production")
+    SECRET_KEY: str = os.getenv("SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 

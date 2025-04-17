@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 
 from app.base import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -16,5 +17,8 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.timezone("UTC", func.current_timestamp()),
     )
-    last_login = Column(DateTime(timezone=True),
-        server_default=func.timezone("UTC", func.current_timestamp()), nullable=True)
+    last_login = Column(
+        DateTime(timezone=True),
+        server_default=func.timezone("UTC", func.current_timestamp()),
+        nullable=True,
+    )

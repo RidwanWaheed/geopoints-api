@@ -3,9 +3,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user, get_current_superuser, get_point_service
-from app.models.user import User
+from app.api.deps import (
+    get_current_active_user,
+    get_current_superuser,
+    get_point_service,
+)
 from app.core.exceptions import NotFoundException
+from app.models.user import User
 from app.schemas.pagination import PagedResponse, PageParams
 from app.schemas.point import NearbyPoint, Point, PointCreate, PointUpdate
 from app.services.point import PointService
@@ -18,7 +22,7 @@ def create_point(
     *,
     point_in: PointCreate,
     current_user: User = Depends(get_current_active_user),
-    service: PointService = Depends(get_point_service)
+    service: PointService = Depends(get_point_service),
 ):
     """Create a new point"""
     return service.create(obj_in=point_in)
@@ -120,7 +124,12 @@ def update_point(
 
 
 @router.delete("/{point_id}", response_model=Point)
-def delete_point(*, point_id: int, current_user: User = Depends(get_current_superuser), service: PointService = Depends(get_point_service)):
+def delete_point(
+    *,
+    point_id: int,
+    current_user: User = Depends(get_current_superuser),
+    service: PointService = Depends(get_point_service),
+):
     """Delete a point (requires superuser privileges)"""
     point = service.get(id=point_id)
     if not point:

@@ -45,5 +45,6 @@ class ValidationException(BaseAPIException):
 
 class AuthenticationException(BaseAPIException):
     """Authentication error exception"""
+
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Authentication failed"

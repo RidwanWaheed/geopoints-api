@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_category_service, get_current_active_user, get_current_superuser
-from app.models.user import User
+from app.api.deps import (
+    get_category_service,
+    get_current_active_user,
+    get_current_superuser,
+)
 from app.core.exceptions import NotFoundException
+from app.models.user import User
 from app.schemas.category import Category, CategoryCreate, CategoryUpdate
 from app.schemas.pagination import PagedResponse, PageParams
 from app.services.category import CategoryService
@@ -74,7 +78,7 @@ def delete_category(
     *,
     category_id: int,
     current_user: User = Depends(get_current_superuser),
-    service: CategoryService = Depends(get_category_service)
+    service: CategoryService = Depends(get_category_service),
 ):
     """Delete a category (requires superuser privileges)"""
     category = service.get(id=category_id)

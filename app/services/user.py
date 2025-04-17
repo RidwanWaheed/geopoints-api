@@ -2,9 +2,12 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from app.core.security import create_access_token
-from app.repositories.user import UserRepository
 from app.core.utils import utc_now
-from app.schemas.user import Token, User as UserSchema, UserCreate, UserUpdate
+from app.repositories.user import UserRepository
+from app.schemas.user import Token
+from app.schemas.user import User as UserSchema
+from app.schemas.user import UserCreate, UserUpdate
+
 
 class UserService:
     def __init__(self, repository: UserRepository):
@@ -20,11 +23,11 @@ class UserService:
         user = self.repository.authenticate(email=email, password=password)
         if not user:
             return None
-            
+
         # Update last login
         user.last_login = utc_now()
         self.repository.session.commit()
-        
+
         return UserSchema.model_validate(user)
 
     def create_token(self, *, user_id: int) -> Token:

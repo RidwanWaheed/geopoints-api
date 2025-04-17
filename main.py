@@ -61,6 +61,12 @@ app.add_middleware(
         
         # Default for everything else
         "*": STANDARD_TIER
+    },
+    authenticated_limits={
+        # Higher limits for authenticated users
+        f"{settings.API_V1_STR}/points/nearby": {"limit": 200, "window": 60},
+        f"{settings.API_V1_STR}/points/within": {"limit": 100, "window": 60},
+        f"{settings.API_V1_STR}/points": {"limit": 100, "window": 60},
     }
 )
 
@@ -68,10 +74,12 @@ app.add_middleware(
 if settings.backend_cors_origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.backend_cors_origins,
+        allow_origins=[origin.strip() for origin in settings.backend_cors_origins],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type"],
+        expose_headers=["X-Total-Count"],
+        max_age=600,  # 10 minutes cache for preflight requests
     )
 
     print(

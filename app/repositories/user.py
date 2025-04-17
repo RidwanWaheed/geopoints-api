@@ -7,6 +7,7 @@ from app.models.user import User
 from app.repositories.base import BaseRepository
 from app.schemas.user import UserCreate, UserUpdate
 
+
 class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     def __init__(self, session: Session):
         super().__init__(session=session, model=User)
@@ -40,15 +41,15 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
         """
         # First try as email
         user = self.get_by_email(email=email)
-        
+
         # If not found, try as username
         if not user:
             user = self.get_by_username(username=email)
-            
+
         # If still not found or password doesn't match
         if not user:
             return None
         if not verify_password(password, user.hashed_password):
             return None
-            
+
         return user

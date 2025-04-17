@@ -2,8 +2,6 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 
 from app.base import Base
-from app.core.utils import utc_now
-
 
 class Category(Base):
     __tablename__ = "categories"

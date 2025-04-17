@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Tuple
 
+from app.core.utils import point_to_geojson
 from app.models.point import Point
 from app.schemas.point import NearbyPoint
 from app.schemas.point import Point as PointSchema
-from app.core.utils import point_to_geojson
 
 
 class PointMapper:
