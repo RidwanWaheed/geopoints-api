@@ -5,13 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
-from app.config import settings
-from app.dependencies import init_db
 from app.api.deps import cleanup_uow
+from app.config import settings
 from app.core.error_handlers import add_exception_handlers
-from app.middleware.rate_limiting import RateLimitMiddleware
+from app.dependencies import init_db
 from app.middleware.query_monitor import QueryMonitorMiddleware
-
+from app.middleware.rate_limiting import RateLimitMiddleware
 
 # Define rate limit tiers
 STANDARD_TIER = {"limit": 100, "window": 60}  # 100 requests per minute
@@ -19,11 +18,11 @@ INTENSIVE_TIER = {"limit": 20, "window": 60}  # 20 requests per minute
 WRITE_TIER = {"limit": 30, "window": 60}      # 30 requests per minute
 AUTH_TIER = {"limit": 5, "window": 60}        # 5 requests per minute
 
-# Initialize the database
-init_db()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if not settings.TESTING:
+        init_db()
     yield
     cleanup_uow()
 

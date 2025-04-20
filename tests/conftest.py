@@ -9,6 +9,7 @@ os.environ["POSTGRES_DB"] = "geopoints_test"
 os.environ["SECRET_KEY"] = "test_secret_key_for_tests"
 
 import pytest
+from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
@@ -17,8 +18,7 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 # Add project root to path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from dotenv import load_dotenv
-
+# Now import app modules - IMPORTANT: import app directly, not from main
 from app.base import Base
 from app.core.security import get_password_hash
 from app.models.category import Category

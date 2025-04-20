@@ -1,6 +1,7 @@
-import secrets
 import base64
 import os
+import secrets
+
 
 def generate_secret_key():
     """Generate a secure random key suitable for JWT signing"""

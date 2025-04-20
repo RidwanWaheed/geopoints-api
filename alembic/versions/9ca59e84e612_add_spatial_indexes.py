@@ -5,10 +5,11 @@ Revises: 9442cada8ff8
 Create Date: 2025-04-17 07:17:24.702836
 
 """
-from alembic import op
-import sqlalchemy as sa
 import geoalchemy2 as ga
+import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '9ca59e84e612'

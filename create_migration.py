@@ -1,9 +1,10 @@
+import argparse
 import os
 import sys
-import argparse
 
 from alembic import command
-from alembic.config import Config 
+from alembic.config import Config
+
 
 def main():
     # Create a command-line parser

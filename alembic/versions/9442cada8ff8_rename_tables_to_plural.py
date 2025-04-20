@@ -5,10 +5,10 @@ Revises: 4f36fddeda68
 Create Date: 2025-04-16 23:43:39.287992
 
 """
-from alembic import op
-import sqlalchemy as sa
 import geoalchemy2 as ga
+import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '9442cada8ff8'
