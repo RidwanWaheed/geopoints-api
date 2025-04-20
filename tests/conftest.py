@@ -1,6 +1,13 @@
 import os
 import sys
 
+os.environ["TESTING"] = "true"
+os.environ["POSTGRES_SERVER"] = "localhost"
+os.environ["POSTGRES_USER"] = "postgres"
+os.environ["POSTGRES_PASSWORD"] = "postgres"
+os.environ["POSTGRES_DB"] = "geopoints_test"
+os.environ["SECRET_KEY"] = "test_secret_key_for_tests"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
@@ -10,6 +17,8 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 # Add project root to path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from dotenv import load_dotenv
+
 from app.base import Base
 from app.core.security import get_password_hash
 from app.models.category import Category
@@ -18,7 +27,11 @@ from app.models.user import User
 from app.repositories.category import CategoryRepository
 from app.repositories.point import PointRepository
 from app.repositories.user import UserRepository
-from main import app  # Import the FastAPI app
+from main import app
+
+env_test_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env.test")
+if os.path.exists(env_test_path):
+    load_dotenv(env_test_path, override=False)
 
 # Test database URL
 TEST_DATABASE_URL = os.environ.get(
