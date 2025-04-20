@@ -109,11 +109,19 @@ def test_db_engine():
 
         # Create spatial indexes
         conn.execute(
-            text("CREATE INDEX idx_points_geometry ON points USING GIST (geometry)")
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_points_geometry ON points USING GIST (geometry)"
+            )
         )
-        conn.execute(text("CREATE INDEX idx_points_name ON points USING btree (name)"))
         conn.execute(
-            text("CREATE INDEX idx_categories_name ON categories USING btree (name)")
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_points_name ON points USING btree (name)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_categories_name ON categories USING btree (name)"
+            )
         )
 
         conn.commit()
