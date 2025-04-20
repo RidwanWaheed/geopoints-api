@@ -42,10 +42,12 @@ def index_exists(indexname):
 
 
 def upgrade():
-     # Check if PostGIS extension exists
+    # Check if PostGIS extension exists
     conn = op.get_bind()
-    result = conn.execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'"))
-    
+    result = conn.execute(
+        sa.text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+    )
+
     if not result.scalar():
         # Try to create the extension, but don't fail if we don't have privileges
         try:

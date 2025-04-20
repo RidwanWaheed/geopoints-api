@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     PROJECT_DESCRIPTION: str = "API for managing geographic points of interest"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
 
-    # Add TESTING property 
+    # Add TESTING property
     TESTING: bool = os.getenv("TESTING", "False").lower() == "true"
 
     # PostgreSQL settings
