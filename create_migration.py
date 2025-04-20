@@ -1,6 +1,5 @@
 import argparse
 import os
-import sys
 
 from alembic import command
 from alembic.config import Config
