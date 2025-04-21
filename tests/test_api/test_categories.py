@@ -1,7 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-
-
 def test_read_categories(client, test_categories):
     """Test getting all categories."""
     response = client.get("/api/v1/categories/")

@@ -152,10 +152,11 @@ def db_session(test_db_engine):
         db.rollback()
         raise
     finally:
-        # Always rollback at the end of the test
-        db.close()
+        # Always rollback the transaction first
         transaction.rollback()
+        db.close()
         connection.close()
+        # connection.close() # potentially redundant, but safe to keep
 
 
 @pytest.fixture(scope="function")

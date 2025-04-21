@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from geoalchemy2.shape import from_shape, to_shape
 from shapely.geometry import Point as ShapelyPoint
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
 from app.core.constants import SpatialRefSys
@@ -59,6 +59,7 @@ class PointRepository:
                 setattr(db_obj, field, value)
 
         self.session.add(db_obj)
+        self.session.flush()
         return db_obj
 
     def update_coordinates(
@@ -72,6 +73,7 @@ class PointRepository:
         point.geometry = from_shape(shapely_point, srid=SpatialRefSys.WGS84)
 
         self.session.add(point)
+        self.session.flush()
         return point
 
     def delete(self, *, id: int) -> Optional[Point]:
@@ -80,6 +82,7 @@ class PointRepository:
             return None
 
         self.session.delete(obj)
+        self.session.flush()
         return obj
 
     def count(self) -> int:
@@ -105,7 +108,7 @@ class PointRepository:
         query = add_distance_to_query(query, Point, wkb_point)
         query = filter_by_distance(query, Point, wkb_point, radius)
 
-        query = query.order_by("distance").limit(limit)
+        query = query.order_by(text("distance")).limit(limit)
 
         return query.all()
 

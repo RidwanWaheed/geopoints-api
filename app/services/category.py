@@ -25,8 +25,10 @@ class CategoryService:
                     detail="Color must be a valid hex color code (e.g., #FF5733)"
                 )
 
-            category = self.category_repository.create(obj_data=category_in.model_dump())
-            
+            category = self.category_repository.create(
+                obj_data=category_in.model_dump()
+            )
+
             self.category_repository.session.commit()
             self.category_repository.session.refresh(category)
 
@@ -71,7 +73,9 @@ class CategoryService:
         try:
             category = self.category_repository.get(id=category_id)
             if not category:
-                raise NotFoundException(detail=f"Category with ID {category_id} not found")
+                raise NotFoundException(
+                    detail=f"Category with ID {category_id} not found"
+                )
 
             if category_in.name and category_in.name != category.name:
                 if self.category_repository.name_exists(
@@ -90,7 +94,7 @@ class CategoryService:
             category = self.category_repository.update(
                 db_obj=category, obj_data=update_data
             )
-            
+
             self.category_repository.session.commit()
             self.category_repository.session.refresh(category)
 
@@ -103,10 +107,12 @@ class CategoryService:
         try:
             category = self.category_repository.get(id=category_id)
             if not category:
-                raise NotFoundException(detail=f"Category with ID {category_id} not found")
+                raise NotFoundException(
+                    detail=f"Category with ID {category_id} not found"
+                )
 
             category = self.category_repository.delete(id=category_id)
-            
+
             self.category_repository.session.commit()
 
             return self._category_to_schema(category)

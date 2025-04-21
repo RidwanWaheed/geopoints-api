@@ -1,6 +1,5 @@
 import math
 
-import pytest
 from fastapi import Query
 from geoalchemy2 import WKBElement
 from geoalchemy2.shape import from_shape, to_shape

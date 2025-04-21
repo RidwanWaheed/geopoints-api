@@ -1,7 +1,3 @@
-import pytest
-from fastapi.testclient import TestClient
-
-
 def test_read_points(client, test_points):
     """Test getting all points."""
     response = client.get("/api/v1/points/")

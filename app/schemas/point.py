@@ -11,14 +11,14 @@ class PointBase(BaseModel):
     name: str = Field(
         ...,
         description="Name of the point of interest",
-        example="Berlin Cathedral",
+        json_schema_extra={"example": "Berlin Cathedral"},
         min_length=1,
         max_length=100,
     )
     description: Optional[str] = Field(
         None,
         description="Detailed description of the point",
-        example="Historic cathedral in Berlin city center",
+        json_schema_extra={"example": "Historic cathedral in Berlin city center"},
     )
 
 
@@ -26,19 +26,22 @@ class PointCreate(PointBase):
     latitude: float = Field(
         ...,
         description="Latitude coordinate in WGS84",
-        example=52.5192,
+        json_schema_extra={"example": 52.5192},
         ge=-90.0,
         le=90.0,
     )
     longitude: float = Field(
         ...,
         description="Longitude coordinate in WGS84",
-        example=13.4016,
+        json_schema_extra={"example": 13.4016},
         ge=-180.0,
         le=180.0,
     )
     category_id: Optional[int] = Field(
-        None, description="ID of the associated category", example=3, ge=1
+        None,
+        description="ID of the associated category",
+        json_schema_extra={"example": 3},
+        ge=1,  # Corrected
     )
 
 

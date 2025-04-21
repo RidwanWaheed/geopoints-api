@@ -8,9 +8,15 @@ T = TypeVar("T")
 class PageParams(BaseModel):
     """Pagination parameters"""
 
-    page: int = Field(1, ge=1, description="Page number (1-indexed)", example=1)
+    page: int = Field(
+        1, ge=1, description="Page number (1-indexed)", json_schema_extra={"example": 1}
+    )
     limit: int = Field(
-        20, ge=1, le=100, description="Items per page (max 100)", example=20
+        20,
+        ge=1,
+        le=100,
+        description="Items per page (max 100)",
+        json_schema_extra={"example": 20},
     )
 
     @field_validator("page")
@@ -31,10 +37,18 @@ class PageParams(BaseModel):
 class PageMetadata(BaseModel):
     """Pagination metadata"""
 
-    total: int = Field(..., description="Total number of items", example=42)
-    page: int = Field(..., description="Current page number", example=1)
-    limit: int = Field(..., description="Items per page", example=20)
-    pages: int = Field(..., description="Total number of pages", example=3)
+    total: int = Field(
+        ..., description="Total number of items", json_schema_extra={"example": 42}
+    )
+    page: int = Field(
+        ..., description="Current page number", json_schema_extra={"example": 1}
+    )
+    limit: int = Field(
+        ..., description="Items per page", json_schema_extra={"example": 20}
+    )
+    pages: int = Field(
+        ..., description="Total number of pages", json_schema_extra={"example": 3}
+    )
 
 
 class PagedResponse(BaseModel, Generic[T]):

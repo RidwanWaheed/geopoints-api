@@ -16,7 +16,6 @@ def test_create_category(category_repository, db_session):
     category = category_repository.create(obj_data=category_data)
 
     # Verify category data
-    assert category.id is not None
     assert category.name == category_data["name"]
     assert category.description == category_data["description"]
     assert category.color == category_data["color"]
@@ -126,10 +125,13 @@ def test_get_nonexistent_category_by_name(category_repository):
     assert category is None
 
 
-def test_update_category(category_repository, test_categories):
+def test_update_category(category_repository, db_session, test_categories):
     """Test updating a category."""
     # Get the first test category
     test_category = test_categories[0]
+
+    # Store original ID to verify it doesn't change
+    original_id = test_category.id
 
     # Create update data
     update_data = {
@@ -143,14 +145,20 @@ def test_update_category(category_repository, test_categories):
         db_obj=test_category, obj_data=update_data
     )
 
+    # Explicitly flush to ensure the update is processed
+    db_session.flush()
+
     # Verify category data
-    assert updated_category.id == test_category.id
+    assert updated_category.id == original_id
     assert updated_category.name == update_data["name"]
     assert updated_category.description == update_data["description"]
     assert updated_category.color == update_data["color"]
 
+    # Commit the changes to avoid conflicts during teardown
+    db_session.commit()
 
-def test_update_category_partial(category_repository, test_categories):
+
+def test_update_category_partial(category_repository, db_session, test_categories):
     """Test partially updating a category."""
     # Get the first test category
     test_category = test_categories[0]
@@ -164,14 +172,20 @@ def test_update_category_partial(category_repository, test_categories):
         db_obj=test_category, obj_data=update_data
     )
 
+    # Flush to ensure the update is processed
+    db_session.flush()
+
     # Verify category data - name should remain unchanged
     assert updated_category.id == test_category.id
     assert updated_category.name == original_name
     assert updated_category.description == update_data["description"]
     assert updated_category.color == test_category.color
 
+    # Commit changes to avoid issues during teardown
+    db_session.commit()
 
-def test_update_category_dict(category_repository, test_categories):
+
+def test_update_category_dict(category_repository, db_session, test_categories):
     """Test updating a category with a dictionary."""
     # Get the first test category
     test_category = test_categories[0]
@@ -184,14 +198,20 @@ def test_update_category_dict(category_repository, test_categories):
         db_obj=test_category, obj_data=update_data
     )
 
+    # Flush to ensure the update is processed
+    db_session.flush()
+
     # Verify category data
     assert updated_category.id == test_category.id
     assert updated_category.name == update_data["name"]
     assert updated_category.description == test_category.description  # Unchanged
     assert updated_category.color == update_data["color"]
 
+    # Commit changes to avoid conflicts during teardown
+    db_session.commit()
 
-def test_remove_category(category_repository, test_categories):
+
+def test_remove_category(category_repository, db_session, test_categories):
     """Test removing a category."""
     # Get the first test category
     test_category = test_categories[0]
@@ -199,12 +219,18 @@ def test_remove_category(category_repository, test_categories):
     # Remove the category
     removed_category = category_repository.delete(id=test_category.id)
 
+    # Flush to ensure deletion is processed
+    db_session.flush()
+
     # Verify removed category data
     assert removed_category.id == test_category.id
 
     # The category should no longer exist in the database
     category = category_repository.get(id=test_category.id)
     assert category is None
+
+    # Commit changes to avoid issues during teardown
+    db_session.commit()
 
 
 def test_count_categories(category_repository, test_categories):

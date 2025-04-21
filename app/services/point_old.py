@@ -70,7 +70,9 @@ def upgrade():
     # Create index on category name if it doesn't exist
     if not index_exists("ix_categories_name"):
         try:
-            op.create_index(op.f("ix_categories_name"), "categories", ["name"], unique=True)
+            op.create_index(
+                op.f("ix_categories_name"), "categories", ["name"], unique=True
+            )
         except Exception:
             pass  # Ignore if it fails (might exist with a different name)
 
@@ -123,11 +125,11 @@ def upgrade():
     if not index_exists("idx_points_geometry"):
         try:
             op.create_index(
-            "idx_points_geometry",
-            "points",
-            ["geometry"],
-            unique=False,
-            postgresql_using="gist",
+                "idx_points_geometry",
+                "points",
+                ["geometry"],
+                unique=False,
+                postgresql_using="gist",
             )
         except Exception:
             pass  # Ignore if it fails
@@ -136,11 +138,11 @@ def upgrade():
     if not index_exists("idx_points_geography"):
         try:
             op.create_index(
-            "idx_points_geography",
-            "points",
-            [sa.text("geography(geometry)")],
-            unique=False,
-            postgresql_using="gist",
+                "idx_points_geography",
+                "points",
+                [sa.text("geography(geometry)")],
+                unique=False,
+                postgresql_using="gist",
             )
         except Exception:
             pass  # Ignore if it fails
@@ -148,7 +150,7 @@ def upgrade():
     # Create spatial index if it doesn't exist
     if not index_exists("idx_points_geography"):
         try:
-             "CREATE INDEX idx_points_geometry_knn ON points USING GIST (geometry gist_geometry_ops_nd)"
+            "CREATE INDEX idx_points_geometry_knn ON points USING GIST (geometry gist_geometry_ops_nd)"
         except Exception:
             pass  # Ignore if it fails
 

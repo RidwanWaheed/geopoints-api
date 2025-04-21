@@ -3,6 +3,7 @@ from typing import List, Tuple, TypeVar
 
 from geoalchemy2.elements import WKBElement
 from geoalchemy2.shape import from_shape
+from geoalchemy2.types import Geography
 from shapely.geometry import Point as ShapelyPoint
 from sqlalchemy import cast, func
 from sqlalchemy.orm import Query
@@ -17,36 +18,41 @@ def point_to_ewkb(lat: float, lng: float):
     shapely_point = ShapelyPoint(lng, lat)
     return from_shape(shapely_point, srid=SpatialRefSys.WGS84)
 
+
 def add_distance_to_query(query: Query, model_class, point_geom: WKBElement) -> Query:
     """
-    Add a distance calculation to a query using direct geography casting
+    Add a distance calculation to a query using Geography type
     """
-    # Cast directly to geography for accurate Earth distance calculation
+
+    # Ensure model's geometry is treated as Geography
+    model_geom_geog = cast(model_class.geometry, Geography)
+
+    # Cast the input point_geom to Geography
+    point_geom_geog = cast(func.ST_GeomFromEWKB(point_geom), Geography)
+
     return query.add_columns(
-        func.ST_Distance(
-            cast(func.geography(model_class.geometry), "geography"),
-            cast(func.geography(point_geom), "geography")
-        ).label("distance")
+        func.ST_Distance(model_geom_geog, point_geom_geog).label("distance")
     )
+
 
 def filter_by_distance(
     query: Query, model_class, point_geom: WKBElement, radius: float
 ) -> Query:
     """
-    Filter a query by distance using ST_DWithin with geography casting
+    Filter a query by distance using ST_DWithin with Geography
     """
-    # Use geography type casts for proper distance calculations
-    return query.filter(
-        func.ST_DWithin(
-            cast(func.geography(model_class.geometry), "geography"),
-            cast(func.geography(point_geom), "geography"),
-            radius
-        )
-    )
+    model_geom_geog = cast(model_class.geometry, Geography)
+    point_geom_geog = cast(func.ST_GeomFromEWKB(point_geom), Geography)
+
+    return query.filter(func.ST_DWithin(model_geom_geog, point_geom_geog, radius))
+
 
 def nearest_neighbor_query(query: Query, model_class, point_geom: WKBElement) -> Query:
     """
-    Optimize query for nearest neighbor search using KNN GiST index
+    Optimize query for nearest neighbor search using KNN <-> operator and Geography
     """
-    # The <-> operator is the KNN distance operator
-    return query.order_by(model_class.geometry.distance_centroid(point_geom))
+    model_geom_geog = cast(model_class.geometry, Geography)
+    point_geom_geog = cast(func.ST_GeomFromEWKB(point_geom), Geography)
+
+    # The <-> operator is the KNN distance operator, now on Geography
+    return query.order_by(model_geom_geog.distance_centroid(point_geom_geog))
