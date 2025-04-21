@@ -14,22 +14,26 @@ class CategoryService:
         self.category_repository = category_repository
 
     def create_category(self, *, category_in: CategoryCreate) -> CategorySchema:
-        # Check if name already exists
-        if self.category_repository.name_exists(name=category_in.name):
-            raise BadRequestException(
-                detail=f"Category with name '{category_in.name}' already exists"
-            )
+        try:
+            if self.category_repository.name_exists(name=category_in.name):
+                raise BadRequestException(
+                    detail=f"Category with name '{category_in.name}' already exists"
+                )
 
-        # Handle hex color format validation
-        if category_in.color and not self._is_valid_hex_color(category_in.color):
-            raise BadRequestException(
-                detail="Color must be a valid hex color code (e.g., #FF5733)"
-            )
+            if category_in.color and not self._is_valid_hex_color(category_in.color):
+                raise BadRequestException(
+                    detail="Color must be a valid hex color code (e.g., #FF5733)"
+                )
 
-        # Create category
-        category = self.category_repository.create(obj_data=category_in.model_dump())
+            category = self.category_repository.create(obj_data=category_in.model_dump())
+            
+            self.category_repository.session.commit()
+            self.category_repository.session.refresh(category)
 
-        return self._category_to_schema(category)
+            return self._category_to_schema(category)
+        except Exception as e:
+            self.category_repository.session.rollback()
+            raise e
 
     def get_category(self, *, category_id: int) -> CategorySchema:
         category = self.category_repository.get(id=category_id)
@@ -64,41 +68,51 @@ class CategoryService:
     def update_category(
         self, *, category_id: int, category_in: CategoryUpdate
     ) -> CategorySchema:
-        # Get existing category
-        category = self.category_repository.get(id=category_id)
-        if not category:
-            raise NotFoundException(detail=f"Category with ID {category_id} not found")
+        try:
+            category = self.category_repository.get(id=category_id)
+            if not category:
+                raise NotFoundException(detail=f"Category with ID {category_id} not found")
 
-        # Check name uniqueness if being updated
-        if category_in.name and category_in.name != category.name:
-            if self.category_repository.name_exists(
-                name=category_in.name, exclude_id=category_id
-            ):
+            if category_in.name and category_in.name != category.name:
+                if self.category_repository.name_exists(
+                    name=category_in.name, exclude_id=category_id
+                ):
+                    raise BadRequestException(
+                        detail=f"Category with name '{category_in.name}' already exists"
+                    )
+
+            if category_in.color and not self._is_valid_hex_color(category_in.color):
                 raise BadRequestException(
-                    detail=f"Category with name '{category_in.name}' already exists"
+                    detail="Color must be a valid hex color code (e.g., #FF5733)"
                 )
 
-        # Handle hex color format validation
-        if category_in.color and not self._is_valid_hex_color(category_in.color):
-            raise BadRequestException(
-                detail="Color must be a valid hex color code (e.g., #FF5733)"
+            update_data = category_in.model_dump(exclude_unset=True)
+            category = self.category_repository.update(
+                db_obj=category, obj_data=update_data
             )
+            
+            self.category_repository.session.commit()
+            self.category_repository.session.refresh(category)
 
-        # Update category
-        update_data = category_in.model_dump(exclude_unset=True)
-        category = self.category_repository.update(
-            db_obj=category, obj_data=update_data
-        )
-
-        return self._category_to_schema(category)
+            return self._category_to_schema(category)
+        except Exception as e:
+            self.category_repository.session.rollback()
+            raise e
 
     def delete_category(self, *, category_id: int) -> CategorySchema:
-        category = self.category_repository.get(id=category_id)
-        if not category:
-            raise NotFoundException(detail=f"Category with ID {category_id} not found")
+        try:
+            category = self.category_repository.get(id=category_id)
+            if not category:
+                raise NotFoundException(detail=f"Category with ID {category_id} not found")
 
-        category = self.category_repository.delete(id=category_id)
-        return self._category_to_schema(category)
+            category = self.category_repository.delete(id=category_id)
+            
+            self.category_repository.session.commit()
+
+            return self._category_to_schema(category)
+        except Exception as e:
+            self.category_repository.session.rollback()
+            raise e
 
     def _category_to_schema(self, category) -> CategorySchema:
         return CategorySchema(

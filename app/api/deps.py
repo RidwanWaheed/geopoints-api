@@ -22,12 +22,15 @@ from app.services.user import UserService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token")
 
 
-# Database session dependency
 def get_db() -> Generator[Session, None, None]:
-    """Provide a database session"""
+    """Provide a database session with proper error handling"""
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        # Always rollback on exception
+        db.rollback()
+        raise
     finally:
         db.close()
 

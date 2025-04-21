@@ -30,8 +30,5 @@ class Point(Base):
     # Define indexes using SQLAlchemy
     __table_args__ = (
         Index("idx_points_geometry", "geometry", postgresql_using="gist"),
-        Index(
-            "idx_points_geography", func.geography("geometry"), postgresql_using="gist"
-        ),
-        # KNN index can't be defined directly in SQLAlchemy, SQL written in the migration file
+        # KNN and geography index can't be defined directly in SQLAlchemy, SQL written in the migration file
     )

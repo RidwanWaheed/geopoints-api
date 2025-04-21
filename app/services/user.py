@@ -23,23 +23,30 @@ class UserService:
         self.user_repository = user_repository
 
     def create_user(self, *, user_in: UserCreate) -> UserSchema:
-        if self.user_repository.email_exists(email=user_in.email):
-            raise BadRequestException(detail="Email already registered")
+        try:
+            if self.user_repository.email_exists(email=user_in.email):
+                raise BadRequestException(detail="Email already registered")
 
-        if self.user_repository.username_exists(username=user_in.username):
-            raise BadRequestException(detail="Username already taken")
+            if self.user_repository.username_exists(username=user_in.username):
+                raise BadRequestException(detail="Username already taken")
 
-        user = self.user_repository.create(
-            email=user_in.email,
-            username=user_in.username,
-            password=user_in.password,
-            is_active=user_in.is_active if user_in.is_active is not None else True,
-            is_superuser=(
-                user_in.is_superuser if user_in.is_superuser is not None else False
-            ),
-        )
+            user = self.user_repository.create(
+                email=user_in.email,
+                username=user_in.username,
+                password=user_in.password,
+                is_active=user_in.is_active if user_in.is_active is not None else True,
+                is_superuser=(
+                    user_in.is_superuser if user_in.is_superuser is not None else False
+                ),
+            )
 
-        return self._user_to_schema(user)
+            self.user_repository.session.commit()
+            self.user_repository.session.refresh(user)
+
+            return self._user_to_schema(user)
+        except Exception as e:
+            self.user_repository.session.rollback()
+            raise e
 
     def get_user(self, *, user_id: int) -> UserSchema:
         user = self.user_repository.get(id=user_id)
@@ -64,46 +71,60 @@ class UserService:
         )
 
     def update_user(self, *, user_id: int, user_in: UserUpdate) -> UserSchema:
-        user = self.user_repository.get(id=user_id)
-        if not user:
-            raise NotFoundException(detail=f"User with ID {user_id} not found")
+        try:
+            user = self.user_repository.get(id=user_id)
+            if not user:
+                raise NotFoundException(detail=f"User with ID {user_id} not found")
 
-        if user_in.email is not None and user_in.email != user.email:
-            if self.user_repository.email_exists(
-                email=user_in.email, exclude_id=user_id
-            ):
-                raise BadRequestException(detail="Email already registered")
+            if user_in.email is not None and user_in.email != user.email:
+                if self.user_repository.email_exists(
+                    email=user_in.email, exclude_id=user_id
+                ):
+                    raise BadRequestException(detail="Email already registered")
 
-        if user_in.username is not None and user_in.username != user.username:
-            if self.user_repository.username_exists(
-                username=user_in.username, exclude_id=user_id
-            ):
-                raise BadRequestException(detail="Username already taken")
+            if user_in.username is not None and user_in.username != user.username:
+                if self.user_repository.username_exists(
+                    username=user_in.username, exclude_id=user_id
+                ):
+                    raise BadRequestException(detail="Username already taken")
 
-        update_data = user_in.model_dump(exclude_unset=True)
+            update_data = user_in.model_dump(exclude_unset=True)
 
-        # Handle password separately if included
-        password = None
-        if "password" in update_data:
-            password = update_data.pop("password")
+            # Handle password separately if included
+            password = None
+            if "password" in update_data:
+                password = update_data.pop("password")
 
-        if update_data:
-            user = self.user_repository.update(db_obj=user, obj_data=update_data)
+            if update_data:
+                user = self.user_repository.update(db_obj=user, obj_data=update_data)
 
-        # Update password if provided
-        if password:
-            # Todo: Password update implementation will need to be added to UserRepository
-            pass
+            # Update password if provided
+            if password:
+                # Todo: Password update implementation will need to be added to UserRepository
+                pass
 
-        return self._user_to_schema(user)
+            self.user_repository.session.commit()
+            self.user_repository.session.refresh(user)
+
+            return self._user_to_schema(user)
+        except Exception as e:
+            self.user_repository.session.rollback()
+            raise e
 
     def delete_user(self, *, user_id: int) -> UserSchema:
-        user = self.user_repository.get(id=user_id)
-        if not user:
-            raise NotFoundException(detail=f"User with ID {user_id} not found")
+        try:
+            user = self.user_repository.get(id=user_id)
+            if not user:
+                raise NotFoundException(detail=f"User with ID {user_id} not found")
 
-        user = self.user_repository.delete(id=user_id)
-        return self._user_to_schema(user)
+            user = self.user_repository.delete(id=user_id)
+
+            self.user_repository.session.commit()
+
+            return self._user_to_schema(user)
+        except Exception as e:
+            self.user_repository.session.rollback()
+            raise e
 
     def authenticate(self, *, email: str, password: str) -> UserSchema:
         user = self.user_repository.authenticate(email=email, password=password)
