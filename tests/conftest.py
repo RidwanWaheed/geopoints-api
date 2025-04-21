@@ -35,7 +35,7 @@ if os.path.exists(env_test_path):
 
 # Test database URL
 TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql://postgres:postgres@localhost/geopoints_test"
+    "TEST_DATABASE_URL", "postgresql://postgres:postgres@db/geopoints_test"
 )
 
 

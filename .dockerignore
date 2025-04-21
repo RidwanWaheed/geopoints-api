@@ -1,0 +1,75 @@
+# Version control
+.git/
+.gitignore
+.github/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+pytest.ini
+coverage.xml
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+virtualenv/
+
+# Package distribution
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Development and IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local configuration
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+*.local
+config.local.yaml
+local_settings.py
+
+# Logs
+*.log
+logs/
+log/
+
+# Docker-specific
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+*.md
+
+# FastAPI specific
+.mypy_cache/
+
+# Test files
+tests/
+test_*.py
+*_test.py
+
+# Temporary files
+tmp/
+temp/
