@@ -2,11 +2,15 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
+from dotenv import load_dotenv
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Settings(BaseSettings):
@@ -40,10 +44,11 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, v: Optional[str], info) -> Any:
         if isinstance(v, str):  # If DATABASE_URI is already a string, return it
             return v
-        return (
+        return os.environ.get(
+            "DATABASE_URL",
             f"postgresql://{info.data.get('POSTGRES_USER', '')}:{info.data.get('POSTGRES_PASSWORD', '')}"
             f"@{info.data.get('POSTGRES_SERVER', '')}:{info.data.get('POSTGRES_PORT', 5432)}/"
-            f"{info.data.get('POSTGRES_DB', '')}"
+            f"{info.data.get('POSTGRES_DB', '')}",
         )
 
     model_config = {

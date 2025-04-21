@@ -109,6 +109,8 @@ def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     """Verify user is active"""
+
+    print(current_user.is_active)
     if not current_user.is_active:
         raise AuthenticationException(detail="Inactive user")
     return current_user

@@ -45,7 +45,9 @@ def upgrade():
     conn = op.get_bind()
 
     # Create PostGIS extension
-    if not conn.execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")).scalar():
+    if not conn.execute(
+        sa.text("SELECT 1 FROM pg_extension WHERE extname = 'postgis'")
+    ).scalar():
         try:
             op.execute("CREATE EXTENSION IF NOT EXISTS postgis")
         except Exception as e:
@@ -126,7 +128,7 @@ def upgrade():
                 )
             except Exception:
                 pass  # Ignore if it fails
-        
+
         if not index_exists("idx_points_geography"):
             try:
                 op.create_index(
@@ -150,24 +152,26 @@ def upgrade():
     # Create users table
     if not table_exists("users"):
         op.create_table(
-            'users',
-            sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('email', sa.String(), nullable=False),
-            sa.Column('username', sa.String(), nullable=False),
-            sa.Column('hashed_password', sa.String(), nullable=False),
-            sa.Column('is_active', sa.Boolean(), server_default='true', nullable=True),
-            sa.Column('is_superuser', sa.Boolean(), server_default='false', nullable=True),
+            "users",
+            sa.Column("id", sa.Integer(), nullable=False),
+            sa.Column("email", sa.String(), nullable=False),
+            sa.Column("username", sa.String(), nullable=False),
+            sa.Column("hashed_password", sa.String(), nullable=False),
+            sa.Column("is_active", sa.Boolean(), server_default="true", nullable=True),
             sa.Column(
-                'created_at',
+                "is_superuser", sa.Boolean(), server_default="false", nullable=True
+            ),
+            sa.Column(
+                "created_at",
                 sa.DateTime(timezone=True),
                 server_default=sa.text("timezone('UTC', CURRENT_TIMESTAMP)"),
-                nullable=True
+                nullable=True,
             ),
-            sa.Column('last_login', sa.DateTime(timezone=True), nullable=True),
-            sa.PrimaryKeyConstraint('id')
+            sa.Column("last_login", sa.DateTime(timezone=True), nullable=True),
+            sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index('ix_users_email', 'users', ['email'], unique=True)
-        op.create_index('ix_users_username', 'users', ['username'], unique=True)
+        op.create_index("ix_users_email", "users", ["email"], unique=True)
+        op.create_index("ix_users_username", "users", ["username"], unique=True)
 
     # Add the distance calculation function
     if not function_exists("calculate_distance"):
@@ -198,6 +202,7 @@ def function_exists(function_name):
         )
     )
     return result.scalar()
+
 
 def downgrade():
     # Try to drop everything, ignore errors
