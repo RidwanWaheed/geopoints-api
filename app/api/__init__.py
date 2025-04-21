@@ -1,3 +1,4 @@
+# app/api/__init__.py
 from fastapi import APIRouter
 
 from app.api.endpoints import auth, categories, points

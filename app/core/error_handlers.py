@@ -21,7 +21,7 @@ def add_exception_handlers(app: FastAPI) -> None:
         """Handle custom API exceptions"""
         return JSONResponse(
             status_code=exc.status_code,
-            content={"error": exc.detail},
+            content={"detail": exc.detail, "error": exc.detail},
         )
 
     @app.exception_handler(RequestValidationError)

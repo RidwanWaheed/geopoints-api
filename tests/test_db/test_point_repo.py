@@ -4,14 +4,11 @@ from shapely import wkt
 from shapely.geometry import Point as ShapelyPoint
 from sqlalchemy import func
 
-from app.repositories.point import PointRepository
-from app.schemas.point import PointCreate, PointUpdate
 
-
-def test_create_from_coords(point_repository, db_session, test_categories):
+def test_create_with_coordinates(point_repository, db_session, test_categories):
     """Test creating a point from coordinates."""
-    # Create point data
-    point_data = PointCreate(
+    # Create point
+    point = point_repository.create_with_coordinates(
         name="Test Point",
         description="A test point",
         latitude=52.5200,
@@ -19,20 +16,17 @@ def test_create_from_coords(point_repository, db_session, test_categories):
         category_id=test_categories[0].id,
     )
 
-    # Create the point
-    point = point_repository.create_from_coords(obj_in=point_data)
-
     # Verify point data
     assert point.id is not None
-    assert point.name == point_data.name
-    assert point.description == point_data.description
-    assert point.category_id == point_data.category_id
+    assert point.name == "Test Point"
+    assert point.description == "A test point"
+    assert point.category_id == test_categories[0].id
 
     # Verify geometry
     assert point.geometry is not None
     shapely_point = to_shape(point.geometry)
-    assert abs(shapely_point.x - point_data.longitude) < 1e-6
-    assert abs(shapely_point.y - point_data.latitude) < 1e-6
+    assert abs(shapely_point.x - 13.4050) < 1e-6
+    assert abs(shapely_point.y - 52.5200) < 1e-6
 
 
 def test_get_point(point_repository, test_points):
@@ -109,17 +103,18 @@ def test_update_point(point_repository, test_points):
     test_point = test_points[0]
 
     # Create update data
-    update_data = PointUpdate(
-        name="Updated Point", description="An updated point description"
-    )
+    update_data = {
+        "name": "Updated Point",
+        "description": "An updated point description",
+    }
 
     # Update the point
-    updated_point = point_repository.update(db_obj=test_point, obj_in=update_data)
+    updated_point = point_repository.update(db_obj=test_point, obj_data=update_data)
 
     # Verify point data
     assert updated_point.id == test_point.id
-    assert updated_point.name == update_data.name
-    assert updated_point.description == update_data.description
+    assert updated_point.name == update_data["name"]
+    assert updated_point.description == update_data["description"]
 
     # Other fields should remain unchanged
     assert updated_point.category_id == test_point.category_id
@@ -131,16 +126,15 @@ def test_update_point_coordinates(point_repository, test_points):
     # Get the first test point
     test_point = test_points[0]
 
-    # Create update data with new coordinates
-    update_data = PointUpdate(latitude=52.5200, longitude=13.4050)
-
     # Update the point
-    updated_point = point_repository.update(db_obj=test_point, obj_in=update_data)
+    updated_point = point_repository.update_coordinates(
+        point_id=test_point.id, latitude=52.5200, longitude=13.4050
+    )
 
     # Verify coordinates were updated
     shapely_point = to_shape(updated_point.geometry)
-    assert abs(shapely_point.x - update_data.longitude) < 0.1
-    assert abs(shapely_point.y - update_data.latitude) < 0.1
+    assert abs(shapely_point.x - 13.4050) < 0.1
+    assert abs(shapely_point.y - 52.5200) < 0.1
 
 
 def test_remove_point(point_repository, test_points):
@@ -149,7 +143,7 @@ def test_remove_point(point_repository, test_points):
     test_point = test_points[0]
 
     # Remove the point
-    removed_point = point_repository.remove(id=test_point.id)
+    removed_point = point_repository.delete(id=test_point.id)
 
     # Verify removed point data
     assert removed_point.id == test_point.id
@@ -176,8 +170,8 @@ def test_count_points_by_category(point_repository, test_points, test_categories
     # Count how many test points have this category
     expected_count = sum(1 for p in test_points if p.category_id == park_category_id)
 
-    # Count points by category
-    count = point_repository.count(category_id=park_category_id)
+    # Use the specific count_by_category method
+    count = point_repository.count_by_category(category_id=park_category_id)
 
     # Verify we get the expected count
     assert count == expected_count
@@ -224,7 +218,7 @@ def test_get_within_polygon(point_repository, test_points):
     polygon_wkt = "POLYGON((13.3 52.5, 13.3 52.55, 13.45 52.55, 13.45 52.5, 13.3 52.5))"
 
     # Get points within the polygon
-    points = point_repository.get_within_polygon(polygon=polygon_wkt)
+    points = point_repository.get_within_polygon(polygon_wkt=polygon_wkt)
 
     # Parse the WKT into a shapely polygon
     polygon = wkt.loads(polygon_wkt)

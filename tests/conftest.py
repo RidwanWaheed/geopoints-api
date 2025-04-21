@@ -160,50 +160,16 @@ def db_session(test_db_engine):
 
 @pytest.fixture(scope="function")
 def client(db_session):
-    """Create a test client with a patched database session."""
+    """Create a test client with patched dependencies."""
 
-    # Define override function for dependency injection
-    def override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-
-    # Override the get_db dependency in the FastAPI app
-    # Find the correct dependency to override based on your app structure
-    from app.api.deps import get_uow
+    # Override the dependencies in the FastAPI app
+    from app.api.deps import get_db
 
     # Store original dependencies
     original_dependencies = app.dependency_overrides.copy()
 
-    # Override UnitOfWork to use our test session
-    class TestUnitOfWork:
-        def __init__(self, session):
-            self.session = session
-            self.points = PointRepository(session)
-            self.categories = CategoryRepository(session)
-            self.users = UserRepository(session)
-
-        def start(self):
-            class ContextManager:
-                def __init__(self, uow):
-                    self.uow = uow
-
-                def __enter__(self):
-                    return self.uow
-
-                def __exit__(self, exc_type, exc_val, exc_tb):
-                    pass
-
-            return ContextManager(self)
-
-        def close(self):
-            pass
-
-    test_uow = TestUnitOfWork(db_session)
-
-    # Override the UoW dependency
-    app.dependency_overrides[get_uow] = lambda: test_uow
+    # Override dependency to use our test session
+    app.dependency_overrides[get_db] = lambda: db_session
 
     # Create test client
     with TestClient(app) as test_client:

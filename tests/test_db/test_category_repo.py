@@ -1,46 +1,49 @@
-import pytest
 import sqlalchemy
-from sqlalchemy.exc import IntegrityError
 
-from app.repositories.category import CategoryRepository
 from app.schemas.category import CategoryCreate, CategoryUpdate
 
 
 def test_create_category(category_repository, db_session):
     """Test creating a category."""
     # Create category data
-    category_data = CategoryCreate(
-        name="Test Category", description="A test category", color="#FF5733"
-    )
+    category_data = {
+        "name": "Test Category",
+        "description": "A test category",
+        "color": "#FF5733",
+    }
 
     # Create the category
-    category = category_repository.create(obj_in=category_data)
+    category = category_repository.create(obj_data=category_data)
 
     # Verify category data
     assert category.id is not None
-    assert category.name == category_data.name
-    assert category.description == category_data.description
-    assert category.color == category_data.color
+    assert category.name == category_data["name"]
+    assert category.description == category_data["description"]
+    assert category.color == category_data["color"]
 
 
 def test_create_category_duplicate_name(category_repository, db_session):
     """Test creating a category with a duplicate name."""
     # First, create a category that we'll attempt to duplicate
-    initial_category = CategoryCreate(
-        name="DuplicateTest", description="Original category", color="#AABBCC"
-    )
+    initial_data = {
+        "name": "DuplicateTest",
+        "description": "Original category",
+        "color": "#AABBCC",
+    }
 
     # Create the initial category
-    category = category_repository.create(obj_in=initial_category)
+    category = category_repository.create(obj_data=initial_data)
     db_session.commit()
 
     # Now try to create a duplicate
-    duplicate_category = CategoryCreate(
-        name="DuplicateTest", description="This should fail", color="#FF0000"
-    )
+    duplicate_data = {
+        "name": "DuplicateTest",
+        "description": "This should fail",
+        "color": "#FF0000",
+    }
 
     try:
-        category = category_repository.create(obj_in=duplicate_category)
+        category = category_repository.create(obj_data=duplicate_data)
         db_session.flush()
 
         # If we get here, the duplicate was somehow allowed - fail the test
@@ -129,22 +132,22 @@ def test_update_category(category_repository, test_categories):
     test_category = test_categories[0]
 
     # Create update data
-    update_data = CategoryUpdate(
-        name="Updated Category",
-        description="An updated category description",
-        color="#00FF00",
-    )
+    update_data = {
+        "name": "Updated Category",
+        "description": "An updated category description",
+        "color": "#00FF00",
+    }
 
     # Update the category
     updated_category = category_repository.update(
-        db_obj=test_category, obj_in=update_data
+        db_obj=test_category, obj_data=update_data
     )
 
     # Verify category data
     assert updated_category.id == test_category.id
-    assert updated_category.name == update_data.name
-    assert updated_category.description == update_data.description
-    assert updated_category.color == update_data.color
+    assert updated_category.name == update_data["name"]
+    assert updated_category.description == update_data["description"]
+    assert updated_category.color == update_data["color"]
 
 
 def test_update_category_partial(category_repository, test_categories):
@@ -154,17 +157,17 @@ def test_update_category_partial(category_repository, test_categories):
     original_name = test_category.name
 
     # Create update data with only description
-    update_data = CategoryUpdate(description="Updated description only")
+    update_data = {"description": "Updated description only"}
 
     # Update the category
     updated_category = category_repository.update(
-        db_obj=test_category, obj_in=update_data
+        db_obj=test_category, obj_data=update_data
     )
 
     # Verify category data - name should remain unchanged
     assert updated_category.id == test_category.id
     assert updated_category.name == original_name
-    assert updated_category.description == update_data.description
+    assert updated_category.description == update_data["description"]
     assert updated_category.color == test_category.color
 
 
@@ -178,7 +181,7 @@ def test_update_category_dict(category_repository, test_categories):
 
     # Update the category
     updated_category = category_repository.update(
-        db_obj=test_category, obj_in=update_data
+        db_obj=test_category, obj_data=update_data
     )
 
     # Verify category data
@@ -194,7 +197,7 @@ def test_remove_category(category_repository, test_categories):
     test_category = test_categories[0]
 
     # Remove the category
-    removed_category = category_repository.remove(id=test_category.id)
+    removed_category = category_repository.delete(id=test_category.id)
 
     # Verify removed category data
     assert removed_category.id == test_category.id

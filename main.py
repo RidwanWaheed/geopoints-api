@@ -5,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
-from app.api.deps import cleanup_uow
 from app.config import settings
 from app.core.error_handlers import add_exception_handlers
 from app.dependencies import init_db
@@ -24,7 +23,6 @@ async def lifespan(app: FastAPI):
     if not settings.TESTING:
         init_db()
     yield
-    cleanup_uow()
 
 
 # Create FastAPI application
